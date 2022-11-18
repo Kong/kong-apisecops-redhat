@@ -1,0 +1,41 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: deck-cli
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1" 
+    tekton.dev/categories: CLI
+    tekton.dev/tags: cli, deck
+    tekton.dev/displayName: "Kong Deck CLI"
+    tekton.dev/platforms: "linux/amd64"
+spec:
+  description: >-
+    This task is intended to execute any deck commands.
+  workspaces: 
+    - name: source
+      description: the workspace with source code
+      optional: true
+    - name: deck
+      description: |
+        Kuberentes secret of the .deck.yaml containing the any deck configuration credentials required for the deck cli.
+      optional: true
+      mountPath: /home/deckuser
+  params: 
+    - name: SCRIPT
+      description: the deck cli command to execute
+      type: string
+      default: ""
+    - name: image 
+      description: the inso image to use.
+      default: docker.io/kong/deck:v1.16.0@sha256:31ccc34bc2c7b243193a03ea99f0f4d73d4868d177d39e041875f72b26962f1f
+  steps: 
+    - name: deck-cli
+      image: $(params.image)
+      workingDir: $(workspaces.source.path)
+      script: $(params.SCRIPT)
+    
+
+    
+      

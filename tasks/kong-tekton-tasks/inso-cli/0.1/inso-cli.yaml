@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: inso-cli
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1" # need to figure this out
+    tekton.dev/categories: CLI
+    tekton.dev/tags: cli, inso
+    tekton.dev/displayName: "Kong Inso CLI"
+    tekton.dev/platforms: "linux/amd64"
+spec:
+  description: >-
+    This task performs inso cli operations - run tests, linting, and generate deck config.
+  workspaces: 
+    - name: source
+      description: the workspace that containers the .isomnia dir
+  params: 
+    - name: SCRIPT
+      description: the inso cli command to execute
+      type: string
+      default: ""
+    - name: image 
+      description: the inso image to use.
+      default: docker.io/kong/inso:3.6.0@sha256:b83f519fd27db1a1d42609f86355cd87ba03b699da1be4b8eadf1214ff45f3d9 #tag 3.6.0
+  steps: 
+    - name: inso-cli
+      image: $(params.image)
+      workingDir: $(workspaces.source.path)
+      script: $(params.SCRIPT)
+  
+  

@@ -1,0 +1,157 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: apispec-review-pipeline
+spec:
+  params:
+    - name: github-host-url
+      description: the github/gitea host domain 
+    - name: git-full-repo-name
+      description: url to the git repository
+    - name: git-security-full-repo-name
+      description: url to the apiops-gateway repository
+      default: gitea/acmebank-apiops-gateway
+    - name: api-spec-id
+      description: insomnia apispec id to be tested
+    - name: api-spec-version
+      description: version of the new api spec to be published
+  workspaces:
+    - name: source
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      workspaces:
+        - name: output
+          workspace: source
+      params:
+        - name: url
+          value: $(params.github-host-url)/$(params.git-full-repo-name)
+        - name: revision
+          value: "master"
+        - name: deleteExisting
+          value: "true"
+    - name: inso-lint
+      taskRef: 
+        name: inso-cli
+      runAfter: 
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: source
+      params: 
+        - name: SCRIPT
+          value: >
+            inso lint spec "$(params.api-spec-id)" --ci --verbose
+    - name: inso-export-apispec
+      taskRef: 
+        name: inso-cli
+      runAfter: 
+        - inso-lint
+      workspaces:
+        - name: source
+          workspace: source
+      params: 
+        - name: SCRIPT
+          value: >
+            inso export spec "$(params.api-spec-id)" --output apispec_disputes.yml --ci --verbose
+    - name: fetch-security-repository
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      runAfter: 
+        - inso-export-apispec
+      workspaces:
+        - name: output
+          workspace: source
+      params:
+        - name: url
+          value: $(params.github-host-url)/$(params.git-security-full-repo-name)
+        - name: revision
+          value: "sandbox"
+        - name: deleteExisting
+          value: "true"
+        - name: subdirectory
+          value: apiops-gateway
+    - name: create-branch
+      runAfter:
+        - fetch-security-repository
+      workspaces: 
+        - name: source
+          workspace: source
+      params:
+        - name: API-SPEC-VERSION
+          value: $(params.api-spec-version)
+      taskSpec: 
+        workspaces: 
+          - name: source
+        params: 
+          - name: API-SPEC-VERSION
+        stepTemplate:
+          env:
+          - name: "HOME"
+            value: "/tekton/home"
+        steps:
+        - image: alpine/git:v2.26.2
+          workingDir: $(workspaces.source.path)        
+          script: | 
+            #!/usr/bin/env sh 
+            cd apiops-gateway
+            git config --global user.email "admin@gitea.com"
+            git config --global user.name "gitea"
+            git checkout -b disputes-$(params.API-SPEC-VERSION) 
+
+            cp ../apispec_disputes.yml apiops-gateway/api/disputes/apispec_disputes.yml
+            echo check git status =========
+            git status
+            git add . 
+            
+            git commit -m "disputes new apispec $(params.API-SPEC-VERSION)"
+            git push -u origin disputes-$(params.API-SPEC-VERSION)
+    - name: github-open-pr-to-security
+      taskRef:
+        name: github-open-pr
+      runAfter: 
+        - create-branch
+      params:
+        - name: GITHUB_HOST_URL
+          value: $(params.github-host-url) 
+        - name: API_PATH_PREFIX
+          value: /api/v1
+        - name: REPO_FULL_NAME
+          value: $(params.git-security-full-repo-name)
+        - name: HEAD
+          value: "disputes-$(params.api-spec-version)"
+        - name: BASE
+          value: sandbox
+        - name: TITLE
+          value: "Disputes API Version $(params.api-spec-version)"
+        - name: BODY 
+          value: "Disputes API Spec update $(params.api-spec-version)"
+        - name: GITHUB_TOKEN_SECRET_KEY
+          value: token
+        - name: GITHUB_TOKEN_SECRET_NAME
+          value: github-token
+        - name: AUTH_TYPE
+          value: Bearer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: apidesign-pvc
+spec:
+  resources:
+    requests:
+      storage: 16Mi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: build-bot 
+secrets:
+  - name: github-basic-auth

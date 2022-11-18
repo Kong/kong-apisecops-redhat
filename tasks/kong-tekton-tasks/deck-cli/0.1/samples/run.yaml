@@ -1,0 +1,19 @@
+
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  generateName: deck-run
+spec:
+  taskRef:
+    name: deck-cli
+  params:
+    - name: SCRIPT
+      value: |
+        #!/usr/bin/env sh
+        deck ping
+  workspaces:
+    - name: source
+      workspace: source
+    - name: deck
+      secret:
+        secretName: deck

@@ -1,0 +1,28 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: disputes-apispec-
+spec:
+  pipelineRef:
+    name: apispec-review-pipeline
+  params:
+    - name: github-host-url
+      value: http://gitea-gitea.apps.df-apiops.2enh.p1.openshiftapps.com
+    - name: git-full-repo-name
+      value: gitea/acmebank-disputes-apispec
+    - name: git-security-full-repo-name
+      value: gitea/acmebank-apiops-gateway
+    - name: api-spec-id
+      value: "spc_cfd3cb71496d467299baefae57008bfe"
+    - name: api-spec-version
+      value: v1.1.0
+  taskRunSpecs:
+    - pipelineTaskName: create-branch
+      taskServiceAccountName: build-bot
+    - pipelineTaskName: github-open-pr-to-security
+      taskServiceAccountName: build-bot
+  workspaces:
+    - name: source
+      persistentvolumeclaim:
+        claimName: apidesign-pvc

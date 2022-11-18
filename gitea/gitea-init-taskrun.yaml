@@ -1,0 +1,94 @@
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  generateName: init-gitea-
+spec:
+  taskSpec:
+    params:
+    - name: GITEA_USER
+      type: string
+      description: Gitea admin username
+      default: gitea
+    - name: GITEA_PASSWORD
+      type: string
+      description: Gitea admin password
+      default: openshift
+    stepTemplate:
+      env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+    results: 
+      - name: github-token
+        description: token of the gitea user
+    steps:
+      - name: init-gitea
+        image: quay.io/siamaksade/python-oc
+        script: |
+          #!/usr/bin/env python3
+
+          import subprocess
+          import os
+          import requests 
+
+          gitea_user = "$(params.GITEA_USER)"
+          gitea_pwd = "$(params.GITEA_PASSWORD)"
+          webhookURL = "http://" + os.popen('oc get route el-webhook -o template --template="{{.spec.host}}"').read()
+          giteaURL = "http://" + os.popen('oc get svc gitea -o template --template="{{.spec.clusterIP}}"').read() + ":3000"
+
+          # create admin user
+          data_user = {
+          'user_name': gitea_user,
+          'password': gitea_pwd,
+          'retype': gitea_pwd,
+          'email': 'admin@gitea.com'
+          }
+
+          resp = requests.post(url = giteaURL + "/user/sign_up", data = data_user) 
+
+          if resp.status_code != 200:
+            print("Error creating Gogs admin (status code: {})".format(resp.status_code))
+            print(resp.content)
+          else:
+            print("Created admin user {}:{}".format(gitea_user, gitea_pwd))
+        
+          # create git repo acmebank-disputes-apispec
+          data_repo = '{"clone_addr": "https://github.com/DaniellaFreese/insomnia-helloworld.git", "uid": 1, "repo_name": "acmebank-disputes-apispec"}'
+          headers = {'Content-Type': 'application/json'}
+          resp = requests.post(url = giteaURL + "/api/v1/repos/migrate", headers = headers, auth = (gitea_user, gitea_pwd), data = data_repo)  
+
+          if resp.status_code != 200 and resp.status_code != 201:
+            print("Error creating git repo (status code: {})".format(resp.status_code))
+            print(resp.content)
+          else:
+            print("Created git repo AcmeBank Disputes APISpec")
+
+          # create git repo acmebank-apiops-gateway
+          data_repo = '{"clone_addr": "https://github.com/DaniellaFreese/apiops-gateway.git", "uid": 1, "repo_name": "acmebank-apiops-gateway"}'
+          headers = {'Content-Type': 'application/json'}
+          resp = requests.post(url = giteaURL + "/api/v1/repos/migrate", headers = headers, auth = (gitea_user, gitea_pwd), data = data_repo)  
+
+          if resp.status_code != 200 and resp.status_code != 201:
+            print("Error creating git repo (status code: {})".format(resp.status_code))
+            print(resp.content)
+          else:
+            print("Created git repo AcmeBank APIOps Gateway")
+          
+          # create a personal access token
+          token_url = giteaURL + "/api/v1/users/" + gitea_user + "/tokens"
+          print ("url is: " + token_url)
+          
+          headers = {'Content-Type':'application/json','accept':'application/json'}
+          
+          data_token = '{"name": "token_3"}'
+
+          token_resp = requests.post(url = token_url, headers = headers, auth=(gitea_user, gitea_pwd), data = data_token)
+             
+          if token_resp != 200 and token_resp.status_code !=201: 
+            print("Error creating token")
+            print(token_resp.content)
+          else: 
+            token = token_resp.json().get("sha1")
+            print("token is: " + token)
+            os.popen('oc create secret generic github-token --from-literal token={0}'.format(token)).read()

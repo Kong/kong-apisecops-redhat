@@ -1,0 +1,138 @@
+
+---
+- name: 'Install Kong APISecOps Demo'
+  hosts: localhost
+  connection: local
+  tasks: 
+
+    - name: Install Pipelines Operator
+      kubernetes.core.k8s: 
+        state: present
+        src: "../pipeline/config/subs-pipelines.yaml"
+
+    - name: Create Namespaces
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Namespace
+        name: "{{ item }}"
+        state: present
+      loop: 
+        - disputes-apispec
+        - apiops-gateway
+        - gitea
+
+# deploy gitea and configure gitea 
+    - name: Deploy Gitea ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        namespace: gitea
+        src: "../gitea/gitea-configmap.yaml"
+    
+    - name: Deploy Gitea 
+      kubernetes.core.k8s:
+        state: present
+        namespace: gitea
+        src: "../gitea/gitea.yaml" 
+
+    - name: Deploy Gitea 
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: gitea
+            namespace: gitea
+        wait: yes 
+        wait_condition:
+          type: Available
+          status: True
+          reason: MinimumReplicasAvailable
+
+    - name: Gitea Init Tekton TaskRun 
+      kubernetes.core.k8s:
+        state: present
+        namespace: gitea
+        src: "../gitea/gitea-init-taskrun.yaml"
+
+# deploy general secrets to app namespaces 
+    - name: Fetch the github-token secret to App Namespaces
+      shell: |
+        kubectl get secret github-token --namespace gitea -o yaml | sed 's/namespace: .*/namespace: {{item}}/' | kubectl apply -f -
+      loop: 
+        - disputes-apispec
+        - apiops-gateway 
+      register: ret
+      failed_when: 
+        - ret.rc == 1 
+        - "'error when patching' not in ret.stderr"
+
+    - name: Deploy Pipeline Secrets
+      kubernetes.core.k8s:
+        state: present 
+        namespace: "{{ item }}"
+        src: "../pipeline/config/pipeline-secrets.yaml"
+      loop: 
+        - disputes-apispec
+        - apiops-gateway 
+
+# configure Disputes ApiSpec Namespace
+    - name: Apply Tekton Tasks to Disputes Namespace
+      kubernetes.core.k8s: 
+        state: present 
+        namespace: disputes-apispec
+        src: "{{ item }}"
+      loop: 
+        - ../tasks/tekton-hub/github-open-pr.yaml
+        - ../tasks/tekton-hub/git-cli.yaml
+        - ../tasks/kong-tekton-tasks/deck-cli/0.1/deck-cli.yaml
+        - ../tasks/kong-tekton-tasks/inso-cli/0.1/inso-cli.yaml
+    
+    - name: Apply Disputes Pipeline 
+      kubernetes.core.k8s: 
+        state: present
+        namespace: disputes-apispec
+        src: "../pipeline/disputes-team-pipeline.yaml"
+    
+
+# configure ApiOps-gateway Namespace
+    - name: Apply Tekton Tasks to APIOps Namespace
+      kubernetes.core.k8s: 
+        state: present 
+        namespace: apiops-gateway
+        src: "{{ item }}"
+      loop: 
+        - ../tasks/tekton-hub/git-cli.yaml
+        - ../tasks/tekton-hub/yq.yaml
+        - ../tasks/tekton-hub/github-close-issue.yaml
+        - ../tasks/kong-tekton-tasks/deck-cli/0.1/deck-cli.yaml
+        - ../tasks/kong-tekton-tasks/inso-cli/0.1/inso-cli.yaml
+
+    - name: Apply APIOps Pipeline
+      kubernetes.core.k8s: 
+        state: present
+        namespace: apiops-gateway
+        src: "../pipeline/apiops-team-pipeline.yaml"
+    
+    - name: Get Gitea Route 
+      set_fact: 
+        gitea_route: "{{ query('kubernetes.core.k8s', kind='Route', namespace='gitea', resource_name='gitea') | first }}"
+    
+    - name: Copy PipelineRun to Run Location 
+      ansible.builtin.copy: 
+        src: "../pipeline/pipeline-run/{{ item }}"
+        dest: "../run/{{ item }}"
+      loop: 
+        - disputes-pipeline-run.yaml
+
+    - name: Update github-host-url in PipelineRun Params
+      ansible.builtin.replace: 
+        path: "../run/{{ item }}"
+        regexp: 'https://github.com'
+        replace: 'http://{{ gitea_route.spec.host }}'
+      loop: 
+        - disputes-pipeline-run.yaml
+    
+    ## TODOS
+      # 1. TEST CURRENT STATE OF THE PLAYBOOK, TEST THE PIPELNIE RUN 
+      # 2. ADD THE APIOPS PIPELINE RUN 
+      # 3. SETUP OF KONNECT

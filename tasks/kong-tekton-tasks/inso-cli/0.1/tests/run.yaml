@@ -1,0 +1,61 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: inso-pipeline-test
+spec:
+  params:
+    - name: git-url
+      description: url to the git repository
+    - name: inso-script
+      description: inso script to run
+  workspaces:
+    - name: source
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: source
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: revision
+          value: "develop"
+        - name: deleteExisting
+          value: "true"
+    - name: inso-lint
+      taskRef: 
+        name: inso-cli
+      runAfter: 
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: source
+      params: 
+        - name: SCRIPT
+          value: $(params.inso-script)
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: inso-pipeline-test-1
+spec:
+  pipelineRef:
+    name: inso-pipeline-test
+  params:
+  - name: git-url
+    value: https://github.com/Kong/insomnia.git
+  - name: inso-script
+    value: |
+      inso lint spec spc_46c5a4a40e83445a9bd9d9758b86c16c --ci --verbose --src packages/insomnia-inso/src/db/fixtures/git-repo
+  workspaces:
+    - name: source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 50Mi

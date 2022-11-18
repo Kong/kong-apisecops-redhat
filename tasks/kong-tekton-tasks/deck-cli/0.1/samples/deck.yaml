@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: deck
+type: Opaque
+stringData:
+  .deck.yaml: |-
+    konnect-email: hellome@konghq.com
+    konnect-password: snecretsnuff
+    
