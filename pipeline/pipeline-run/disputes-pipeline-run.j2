@@ -9,7 +9,7 @@ spec:
     name: apispec-review-pipeline
   params:
     - name: github-host-url
-      value: http://gitea-gitea.apps.df-apiops.2enh.p1.openshiftapps.com
+      value: {{ protocol }}://{{ github_domain }}
     - name: git-full-repo-name
       value: gitea/acmebank-disputes-apispec
     - name: git-security-full-repo-name

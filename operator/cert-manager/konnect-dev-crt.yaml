@@ -1,0 +1,22 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: konnect-dev-crt
+  namespace: kong-dev
+spec:
+  secretName: konnect-dev-crt
+  duration: 2160h0m0s # 90d
+  renewBefore: 360h0m0s # 15d
+  organization:
+  - "Partner Engineering Kong"
+  keySize: 2048
+  keyAlgorithm: rsa
+  keyEncoding: pkcs1
+  usages:
+    - server auth
+    - client auth
+  dnsNames:
+  - apisecops.dev.example.com
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer

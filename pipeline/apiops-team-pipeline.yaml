@@ -2,17 +2,21 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: api-gateway-dev-pipeline
+  name: api-gateway-sandbox-pipeline
 spec:
   params:
-    - name: git-url
-      description: url to the git repository
+    - name: github-host-url
+      description: the github/gitea host domain
+    - name: git-full-repo-name
+      description: the full git repo name (gitea/acmebank-gateway)
     - name: git-branch
       description: branch to pull down
     - name: api-spec-file
       description: insomnia apispec id to be tested
     - name: api-spec-src
-      description: path to the api-spec-file 
+      description: path to the api-spec-file
+    - name: konnect-runtime-group
+      description: the konnect runtime group where the apispec will be synced to
   workspaces:
     - name: source
     - name: github-basic-auth
@@ -27,7 +31,7 @@ spec:
           workspace: source
       params:
         - name: url
-          value: $(params.git-url)
+          value: $(params.github-host-url)/$(params.git-full-repo-name)
         - name: revision
           value: "$(params.git-branch)"
         - name: deleteExisting
@@ -124,7 +128,7 @@ spec:
             #!/usr/bin/env sh
             echo $HOME
             ls -al
-            deck sync --state apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml --konnect-runtime-group-name default
+            deck sync --state apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml --konnect-runtime-group-name $(params.konnect-runtime-group)
     - name: update-pr
       runAfter:
         - deck-diff
@@ -149,8 +153,8 @@ spec:
           script: | 
             #!/usr/bin/env sh
             cd apiops-gateway 
-            git config --global user.email "DaniellaFreese@gmail.com"
-            git config --global user.name "DaniellaFreese"
+            git config --global user.email "apiopsbot@gmail.com"
+            git config --global user.name "apioops"
             echo =====check git status =========
             git switch $(params.GIT-BRANCH)
             git branch

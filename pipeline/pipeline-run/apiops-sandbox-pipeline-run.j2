@@ -1,0 +1,31 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: api-gateway-sandbox-
+  namespace: apiops-gateway
+spec:
+  pipelineRef: 
+    name: api-gateway-sandbox-pipeline
+  params:
+    - name: git-url
+      value: {{ protocol }}://{{ github_domain }}
+    - name: git-branch
+      value: disputes-v1.1.0
+    - name: api-spec-file
+      value: apispec_disputes.yml
+    - name: api-spec-src
+      value: disputes
+  taskRunSpecs: 
+    - pipelineTaskName: update-pr
+      taskServiceAccountName: build-bot
+  workspaces:
+    - name: source
+      persistentvolumeclaim:
+        claimName: api-gateway-dev-pvc
+    - name: github-basic-auth
+      secret: 
+        secretName: my-github-auth
+    - name: deck
+      secret: 
+        secretName: deck
