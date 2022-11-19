@@ -5,169 +5,169 @@
   connection: local
   tasks: 
 
-#     - name: Install Operators 
-#       kubernetes.core.k8s: 
-#         state: present
-#         src: "{{ item }}"
-#       loop: 
-#         - ../operator/subs-pipelines.yaml
-#         - ../operator/subs-cert-manager.yaml
+    - name: Install Operators 
+      kubernetes.core.k8s: 
+        state: present
+        src: "{{ item }}"
+      loop: 
+        - ../operator/subs-pipelines.yaml
+        - ../operator/subs-cert-manager.yaml
 
-#     - name: Create App Namespaces
-#       kubernetes.core.k8s:
-#         api_version: v1
-#         kind: Namespace
-#         name: "{{ item }}"
-#         state: present
-#       loop: 
-#         - disputes-apispec
-#         - disputes-dev
-#         - apiops-gateway
-#         - gitea
+    - name: Create App Namespaces
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Namespace
+        name: "{{ item }}"
+        state: present
+      loop: 
+        - disputes-apispec
+        - disputes-dev
+        - apiops-gateway
+        - gitea
 
-# # deploy gitea and configure gitea 
-#     - name: Deploy Gitea ConfigMap
-#       kubernetes.core.k8s:
-#         state: present
-#         namespace: gitea
-#         src: "../gitea/gitea-configmap.yaml"
+# deploy gitea and configure gitea 
+    - name: Deploy Gitea ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        namespace: gitea
+        src: "../gitea/gitea-configmap.yaml"
     
-#     - name: Deploy Gitea 
-#       kubernetes.core.k8s:
-#         state: present
-#         namespace: gitea
-#         src: "../gitea/gitea.yaml" 
+    - name: Deploy Gitea 
+      kubernetes.core.k8s:
+        state: present
+        namespace: gitea
+        src: "../gitea/gitea.yaml" 
 
-#     - name: Deploy Gitea 
-#       kubernetes.core.k8s:
-#         definition:
-#           apiVersion: apps/v1
-#           kind: Deployment
-#           metadata:
-#             name: gitea
-#             namespace: gitea
-#         wait: yes 
-#         wait_condition:
-#           type: Available
-#           status: True
-#           reason: MinimumReplicasAvailable
+    - name: Deploy Gitea 
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: gitea
+            namespace: gitea
+        wait: yes 
+        wait_condition:
+          type: Available
+          status: True
+          reason: MinimumReplicasAvailable
 
-#     - name: Gitea Init Tekton TaskRun 
-#       kubernetes.core.k8s:
-#         state: present
-#         namespace: gitea
-#         src: "../gitea/gitea-init-taskrun.yaml"
+    - name: Gitea Init Tekton TaskRun 
+      kubernetes.core.k8s:
+        state: present
+        namespace: gitea
+        src: "../gitea/gitea-init-taskrun.yaml"
 
-# # deploy general secrets to app namespaces 
-#     - name: Fetch the github-token secret to App Namespaces
-#       shell: |
-#         kubectl get secret github-token --namespace gitea -o yaml | sed 's/namespace: .*/namespace: {{item}}/' | kubectl apply -f -
-#       loop: 
-#         - disputes-apispec
-#         - apiops-gateway 
-#       register: ret
-#       failed_when: 
-#         - ret.rc == 1 
-#         - "'error when patching' not in ret.stderr"
+# deploy general secrets to app namespaces 
+    - name: Fetch the github-token secret to App Namespaces
+      shell: |
+        kubectl get secret github-token --namespace gitea -o yaml | sed 's/namespace: .*/namespace: {{item}}/' | kubectl apply -f -
+      loop: 
+        - disputes-apispec
+        - apiops-gateway 
+      register: ret
+      failed_when: 
+        - ret.rc == 1 
+        - "'error when patching' not in ret.stderr"
 
-#     - name: Deploy Pipeline Secrets
-#       kubernetes.core.k8s:
-#         state: present 
-#         namespace: "{{ item }}"
-#         template: "../pipeline/config/pipeline-secrets.j2.yaml"
-#       loop: 
-#         - disputes-apispec
-#         - apiops-gateway 
+    - name: Deploy Pipeline Secrets
+      kubernetes.core.k8s:
+        state: present 
+        namespace: "{{ item }}"
+        template: "../pipeline/config/pipeline-secrets.j2.yaml"
+      loop: 
+        - disputes-apispec
+        - apiops-gateway 
 
-# # configure Disputes ApiSpec Namespace
-#     - name: Apply Tekton Tasks to Disputes Namespace
-#       kubernetes.core.k8s: 
-#         state: present 
-#         namespace: disputes-apispec
-#         src: "{{ item }}"
-#       loop: 
-#         - ../tasks/tekton-hub/github-open-pr.yaml
-#         - ../tasks/tekton-hub/git-cli.yaml
-#         - ../tasks/kong-tekton-tasks/deck-cli/0.1/deck-cli.yaml
-#         - ../tasks/kong-tekton-tasks/inso-cli/0.1/inso-cli.yaml
+# configure Disputes ApiSpec Namespace
+    - name: Apply Tekton Tasks to Disputes Namespace
+      kubernetes.core.k8s: 
+        state: present 
+        namespace: disputes-apispec
+        src: "{{ item }}"
+      loop: 
+        - ../tasks/tekton-hub/github-open-pr.yaml
+        - ../tasks/tekton-hub/git-cli.yaml
+        - ../tasks/kong-tekton-tasks/deck-cli/0.1/deck-cli.yaml
+        - ../tasks/kong-tekton-tasks/inso-cli/0.1/inso-cli.yaml
     
-#     - name: Apply Disputes Pipeline 
-#       kubernetes.core.k8s: 
-#         state: present
-#         namespace: disputes-apispec
-#         src: "../pipeline/disputes-team-pipeline.yaml"
+    - name: Apply Disputes Pipeline 
+      kubernetes.core.k8s: 
+        state: present
+        namespace: disputes-apispec
+        src: "../pipeline/disputes-team-pipeline.yaml"
     
 
-# # configure ApiOps-gateway Namespace
-#     - name: Apply Tekton Tasks to APIOps Namespace
-#       kubernetes.core.k8s: 
-#         state: present 
-#         namespace: apiops-gateway
-#         src: "{{ item }}"
-#       loop: 
-#         - ../tasks/tekton-hub/git-cli.yaml
-#         - ../tasks/tekton-hub/yq.yaml
-#         - ../tasks/tekton-hub/github-close-issue.yaml
-#         - ../tasks/kong-tekton-tasks/deck-cli/0.1/deck-cli.yaml
-#         - ../tasks/kong-tekton-tasks/inso-cli/0.1/inso-cli.yaml
+# configure ApiOps-gateway Namespace
+    - name: Apply Tekton Tasks to APIOps Namespace
+      kubernetes.core.k8s: 
+        state: present 
+        namespace: apiops-gateway
+        src: "{{ item }}"
+      loop: 
+        - ../tasks/tekton-hub/git-cli.yaml
+        - ../tasks/tekton-hub/yq.yaml
+        - ../tasks/tekton-hub/github-close-issue.yaml
+        - ../tasks/kong-tekton-tasks/deck-cli/0.1/deck-cli.yaml
+        - ../tasks/kong-tekton-tasks/inso-cli/0.1/inso-cli.yaml
 
-#     - name: Apply APIOps Pipeline
-#       kubernetes.core.k8s: 
-#         state: present
-#         namespace: apiops-gateway
-#         src: "../pipeline/apiops-team-pipeline.yaml"
+    - name: Apply APIOps Pipeline
+      kubernetes.core.k8s: 
+        state: present
+        namespace: apiops-gateway
+        src: "../pipeline/apiops-team-pipeline.yaml"
     
-#     - name: Get Gitea Route 
-#       set_fact: 
-#         gitea_route: "{{ query('kubernetes.core.k8s', kind='Route', namespace='gitea', resource_name='gitea') | first }}"
+    - name: Get Gitea Route 
+      set_fact: 
+        gitea_route: "{{ query('kubernetes.core.k8s', kind='Route', namespace='gitea', resource_name='gitea') | first }}"
 
-#     - name: Copy PipelineRun Template to Run Location 
-#       ansible.builtin.template: 
-#         src: "../pipeline/pipeline-run/{{ item }}.j2"
-#         dest: "../run/{{ item }}.yaml"
-#       vars: 
-#         github_domain: "{{ gitea_route.spec.host }}"
-#         protocol: http
-#       loop: 
-#         - disputes-pipeline-run
-#         - apiops-sandbox-pipeline-run
+    - name: Copy PipelineRun Template to Run Location 
+      ansible.builtin.template: 
+        src: "../pipeline/pipeline-run/{{ item }}.j2"
+        dest: "../run/{{ item }}.yaml"
+      vars: 
+        github_domain: "{{ gitea_route.spec.host }}"
+        protocol: http
+      loop: 
+        - disputes-pipeline-run
+        - apiops-sandbox-pipeline-run
 
-#   # Konnect 
-#     - name: Create Konnect Dataplane Namespaces
-#       kubernetes.core.k8s:
-#         api_version: v1
-#         kind: Namespace
-#         name: "{{ item }}"
-#         state: present
-#       loop: 
-#         - kong-sandbox 
-#         - kong-dev
+  # Konnect 
+    - name: Create Konnect Dataplane Namespaces
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Namespace
+        name: "{{ item }}"
+        state: present
+      loop: 
+        - kong-sandbox 
+        - kong-dev
 
-#     - name: Create the SelfSigned Issuer
-#       kubernetes.core.k8s: 
-#         state: present
-#         src: "../operator/cert-manager/cluster_issuer_selfsigned.yaml"
+    - name: Create the SelfSigned Issuer
+      kubernetes.core.k8s: 
+        state: present
+        src: "../operator/cert-manager/cluster_issuer_selfsigned.yaml"
 
-#     - name: Wait for the SelfSigned Issuer to be Ready 
-#       kubernetes.core.k8s:
-#         definition:
-#           apiVersion: cert-manager.io/v1
-#           kind: ClusterIssuer
-#           metadata:
-#             name: selfsigned-issuer
-#         wait: yes 
-#         wait_condition:
-#           type: Ready
-#           status: True
-#           reason: IsReady
+    - name: Wait for the SelfSigned Issuer to be Ready 
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: selfsigned-issuer
+        wait: yes 
+        wait_condition:
+          type: Ready
+          status: True
+          reason: IsReady
 
-#     - name: Create the Dataplane Certificates
-#       kubernetes.core.k8s: 
-#         state: present
-#         src: "{{ item }}"
-#       loop: 
-#         - ../operator/cert-manager/konnect-sandbox-crt.yaml
-#         - ../operator/cert-manager/konnect-dev-crt.yaml
+    - name: Create the Dataplane Certificates
+      kubernetes.core.k8s: 
+        state: present
+        src: "{{ item }}"
+      loop: 
+        - ../operator/cert-manager/konnect-sandbox-crt.yaml
+        - ../operator/cert-manager/konnect-dev-crt.yaml
     
     - name: Create Cert Vars 
       ansible.builtin.set_fact: 
