@@ -185,101 +185,21 @@
             - { namespace: kong-sandbox, crt_secret: konnect-sandbox-crt }
             - { namespace: kong-dev, crt_secret: konnect-dev-crt }
 
-  #   - name: Create the Dataplane Certificates
-  #     kubernetes.core.k8s: 
-  #       state: present
-  #       src: "{{ item }}"
-  #     loop: 
-  #       - ../konnect/konnect-sandbox-crt.yaml
-  #       - ../konnect/konnect-dev-crt.yaml
+    - name: Create the deck.yaml secret
+      kubernetes.core.k8s:
+        state: present
+        definition: 
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: deck
+            namespace: "{{ item }}"
+          type: Opaque
+          stringData:
+            .deck.yaml: |-
+              konnect-email: "{{ konnect_email }}"
+              konnect-password: "{{ konnect_pass }}"
+      loop: 
+        - kong-sandbox
+        - kong-dev
     
-  #   - name: Create Cert Vars 
-  #     ansible.builtin.set_fact: 
-  #       sandbox_crt: "{{ query('kubernetes.core.k8s', kind='Secret', namespace='kong-sandbox', resource_name='konnect-sandbox-crt') | first }}"
-  #       dev_crt: "{{ query('kubernetes.core.k8s', kind='Secret', namespace='kong-dev', resource_name='konnect-dev-crt') | first }}"
-
-  #   - name: Base64 Decode Certs
-  #     ansible.builtin.set_fact: 
-  #       sandbox_crt_raw: "{{ sandbox_crt.data['tls.crt'] | b64decode }}"
-  #       dev_crt_raw: "{{ dev_crt.data['tls.crt'] | b64decode }}"
-  
-  # # how to concatenate these two into 1 task
-  #   - name: Awk Cert - Sandbox
-  #     ansible.builtin.shell: |
-  #       echo "{{ sandbox_crt_raw }}" | awk '{printf "%s\\n", $0}'
-  #     register: sandbox_res
-    
-  #   - name: Awk Cert - Dev
-  #     ansible.builtin.shell: |
-  #       echo "{{ dev_crt_raw }}" | awk '{printf "%s\\n", $0}'
-  #     register: dev_res
-
-  #   - name: Get Certs from Awk Output
-  #     ansible.builtin.set_fact: 
-  #      sandbox_crt: "{{ sandbox_res.stdout }}"
-  #      dev_crt: "{{ dev_res.stdout }}"
-        
-  #   - name: Sandbox Cert Prepped for Konnect
-  #     debug: 
-  #       var: sandbox_crt
-
-  #   - name: Dev Cert Prepped for Konnect
-  #     debug: 
-  #       var: sandbox_crt
-
-  #   - name: Push Certificates to Konnect
-  #     block:
-  #       - name: Authenticate to Konnect
-  #         ansible.builtin.uri:
-  #           url: "https://{{ base_url }}/kauth/api/v1/authenticate"
-  #           method: POST
-  #           body_format: json
-  #           body: '{ "username": "{{ konnect_email }}", "password":"{{ konnect_pass }}" }'
-  #           return_content: yes
-  #         register: login
-
-  #       - name: login output response
-  #         debug: 
-  #           var: login
-
-  #       - name: GET Konnect Control Plane Data
-  #         ansible.builtin.uri:
-  #           url: "https://{{ base_url }}/api/runtime_groups/{{ konnect_controlPlane }}"
-  #           method: GET
-  #           return_content: yes
-  #           headers:
-  #             Cookie: "{{ login.cookies_string }}"
-  #         register: cp_content
-
-  #       - name: Control Plane Facts
-  #         ansible.builtin.set_fact:
-  #           konnect_cp_id: "{{ cp_content.json['id'] }}"
-  #           konnect_cp_name: "{{ cp_content.json['name']}}"
-  #           konnect_cp_endpoint: "{{ cp_content.json['config']['cp_outlet'] | regex_replace('https://') | regex_replace('/') }}"
-  #           konnect_tp_endpoint: "{{cp_content.json['config']['telemetry_endpoint'] | regex_replace('https://') | regex_replace('/') }}"
-
-  #       - debug: 
-  #           msg: '{ "name": "{{ konnect_cp_name }}", "id" :"{{ konnect_cp_id }}", "certificates": ["{{ sandbox_crt }}"] }'
-
-  #       - name: PUT Dataplane Certs to Konnect
-  #         ansible.builtin.uri:
-  #           url: "https://{{ base_url }}/api/runtime_groups/{{ konnect_controlPlane }}"
-  #           method: PUT
-  #           body_format: json
-  #           body: '{ "name": "{{ konnect_cp_name }}", "id" :"{{ konnect_cp_id }}", "certificates": ["{{ sandbox_crt }}, {{ dev_crt }}"] }'
-  #           headers:
-  #             Cookie: "{{ login.cookies_string }}"
-  #         register: cert_request
-        
-  #       - name: output cert_request
-  #         debug:
-  #           var: cert_request
-
-  #     vars:
-  #       base_url: "cloud.konghq.com"
-    
-
-
-
-    
-
