@@ -103,7 +103,7 @@ spec:
             git config --global user.name "gitea"
             git checkout -b disputes-$(params.API-SPEC-VERSION) 
 
-            cp ../apispec_disputes.yml apiops-gateway/api/disputes/apispec_disputes.yml
+            cp ../apispec_disputes.yml api/disputes/apispec_disputes.yml
             echo check git status =========
             git status
             git add . 
