@@ -1,0 +1,39 @@
+--- 
+# Konnect DP Helm Tasks
+- name: Install Konnect Gateway Dataplane - Helm
+  block:
+    - name: Add Kong Chart
+      kubernetes.core.helm_repository:
+        name: kong
+        repo_url: "https://charts.konghq.com"
+        repo_state: present
+
+    - name: "Deploy {{ namespace }} Dataplane"
+      kubernetes.core.helm:
+        name: konnect-dp
+        chart_ref: kong/kong
+        release_namespace: "{{ namespace }}"
+        values:
+          image:
+            repository: kong/kong-gateway
+            tag: "3.0.1.0"
+          secretVolumes:
+          - "{{ crt_secret }}"
+          admin:
+            enabled: false
+          env:
+            role: data_plane
+            database: "off"
+            cluster_mtls: pki
+            cluster_control_plane: "{{ konnect_cp_endpoint }}:443"
+            cluster_server_name: "{{ konnect_cp_endpoint }}"
+            cluster_telemetry_endpoint: "{{ konnect_tp_endpoint }}:443"
+            cluster_telemetry_server_name: "{{ konnect_tp_endpoint }}"
+            cluster_cert: "/etc/secrets/{{ crt_secret }}/tls.crt"
+            cluster_cert_key: "/etc/secrets/{{ crt_secret }}/tls.key"
+            lua_ssl_trusted_certificate: system
+            konnect_mode: "on"
+            vitals: "off"
+          ingressController:
+            enabled: false
+            installCRDs: false

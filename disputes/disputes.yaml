@@ -1,0 +1,39 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: disputes
+  labels:
+    app: disputes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: disputes
+  template:
+    metadata:
+      labels:
+        app: disputes
+    spec:
+      containers:
+      - name: disputes
+        image: djfreese/disputes:latest
+        ports:
+        - containerPort: 8080
+          name: http-port
+          protocol: TCP
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: disputes
+spec:
+  selector:
+    app: disputes
+  type: ClusterIP
+  ports:
+    - name: http-port
+      protocol: TCP
+      appProtocol: http
+      port: 8080
+      targetPort: 8080

@@ -1,0 +1,78 @@
+--- 
+# konnect cert creation and put tasks
+    - name: Create the Dataplane Certificates
+      kubernetes.core.k8s: 
+        state: present
+        template: "konnect-cert.j2.yaml"
+
+    - name: "Create Cert Var: {{crt_secret }}"
+      ansible.builtin.set_fact: 
+        crt: "{{ query('kubernetes.core.k8s', kind='Secret', namespace=namespace, resource_name=crt_secret) | first }}"
+
+    - name: "Base64 Decode Cert: {{ crt_secret }}"
+      ansible.builtin.set_fact: 
+        crt_raw: "{{ crt.data['tls.crt'] | b64decode }}"
+  
+    - name: "Awk Cert: {{ crt_secret }}"
+      ansible.builtin.shell: |
+        echo "{{ crt_raw }}" | awk '{printf "%s\\n", $0}'
+      register: res
+    
+    - name: "Get Cert from Awk Output: {{ crt_secret }}"
+      ansible.builtin.set_fact: 
+       crt: "{{ res.stdout }}"
+        
+    - name: "Cert Prepped for Konnect: {{ crt_secret }}"
+      debug: 
+        var: crt
+
+    - name: "Push Certificates to Konnect: {{ crt_secret }}"
+      block:
+        - name: Authenticate to Konnect
+          ansible.builtin.uri:
+            url: "https://{{ base_url }}/kauth/api/v1/authenticate"
+            method: POST
+            body_format: json
+            body: '{ "username": "{{ konnect_email }}", "password":"{{ konnect_pass }}" }'
+            return_content: yes
+          register: login
+
+        - name: login output response
+          debug: 
+            var: login
+
+        - name: GET Konnect Control Plane Data
+          ansible.builtin.uri:
+            url: "https://{{ base_url }}/api/runtime_groups/{{ konnect_controlPlane }}"
+            method: GET
+            return_content: yes
+            headers:
+              Cookie: "{{ login.cookies_string }}"
+          register: cp_content
+
+        - name: Control Plane Facts
+          ansible.builtin.set_fact:
+            konnect_cp_id: "{{ cp_content.json['id'] }}"
+            konnect_cp_name: "{{ cp_content.json['name']}}"
+            konnect_cp_endpoint: "{{ cp_content.json['config']['cp_outlet'] | regex_replace('https://') | regex_replace('/') }}"
+            konnect_tp_endpoint: "{{cp_content.json['config']['telemetry_endpoint'] | regex_replace('https://') | regex_replace('/') }}"
+
+        - debug: 
+            msg: '{ "name": "{{ konnect_cp_name }}", "id" :"{{ konnect_cp_id }}", "certificates": ["{{ crt }}"] }'
+
+        - name: PUT Dataplane Cert to Konnect
+          ansible.builtin.uri:
+            url: "https://{{ base_url }}/api/runtime_groups/{{ konnect_controlPlane }}"
+            method: PUT
+            body_format: json
+            body: '{ "name": "{{ konnect_cp_name }}", "id" :"{{ konnect_cp_id }}", "certificates": ["{{ crt }}"] }'
+            headers:
+              Cookie: "{{ login.cookies_string }}"
+          register: cert_request
+        
+        - name: output cert_request
+          debug:
+            var: cert_request
+
+      vars:
+        base_url: "cloud.konghq.com"
