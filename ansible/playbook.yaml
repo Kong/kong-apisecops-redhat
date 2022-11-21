@@ -142,64 +142,65 @@
       set_fact: 
         gitea_route: "{{ query('kubernetes.core.k8s', kind='Route', namespace='gitea', resource_name='gitea') | first }}"
 
-    - name: Copy PipelineRun Template to Run Location 
+    - name: Create PipelineRuns 
       ansible.builtin.template: 
         src: "../tekton-pipeline/pipeline-run/{{ item }}.j2"
         dest: "../run/{{ item }}.yaml"
       vars: 
         github_domain: "{{ gitea_route.spec.host }}"
         protocol: http
+        konnect_runtime_group: default
       loop: 
         - disputes-pipeline-run
         - apiops-sandbox-pipeline-run
 
-  # Konnect
-    - name: Create Konnect Dataplane Namespaces
-      kubernetes.core.k8s:
-        api_version: v1
-        kind: Namespace
-        name: "{{ item }}"
-        state: present
-      loop: 
-        - kong-sandbox 
-        - kong-dev
+  # # Konnect
+  #   - name: Create Konnect Dataplane Namespaces
+  #     kubernetes.core.k8s:
+  #       api_version: v1
+  #       kind: Namespace
+  #       name: "{{ item }}"
+  #       state: present
+  #     loop: 
+  #       - kong-sandbox 
+  #       - kong-dev
     
-    - name: Create Konnect Dataplanes
-      block: 
-        - name: Create Konnect Certs
-          include_tasks: tasks/konnect-cert/konnect-cert.yaml
-          vars: 
-            namespace: "{{ item.namespace }}"
-            crt_secret: "{{ item.crt_secret }}"
-          loop: 
-            - { namespace: kong-sandbox, crt_secret: konnect-sandbox-crt }
-            - { namespace: kong-dev, crt_secret: konnect-dev-crt }
+  #   - name: Create Konnect Dataplanes
+  #     block: 
+  #       - name: Create Konnect Certs
+  #         include_tasks: tasks/konnect-cert/konnect-cert.yaml
+  #         vars: 
+  #           namespace: "{{ item.namespace }}"
+  #           crt_secret: "{{ item.crt_secret }}"
+  #         loop: 
+  #           - { namespace: kong-sandbox, crt_secret: konnect-sandbox-crt }
+  #           - { namespace: kong-dev, crt_secret: konnect-dev-crt }
             
         
-        - name: Deploy Konnect Dataplanes
-          include_tasks: tasks/konnect-helm-dp/konnect-helm-dp.yaml
-          vars: 
-            namespace: "{{ item.namespace }}"
-            crt_secret: "{{ item.crt_secret }}"
-          loop: 
-            - { namespace: kong-sandbox, crt_secret: konnect-sandbox-crt }
-            - { namespace: kong-dev, crt_secret: konnect-dev-crt }
+  #       - name: Deploy Konnect Dataplanes
+  #         include_tasks: tasks/konnect-helm-dp/konnect-helm-dp.yaml
+  #         vars: 
+  #           namespace: "{{ item.namespace }}"
+  #           crt_secret: "{{ item.crt_secret }}"
+  #         loop: 
+  #           - { namespace: kong-sandbox, crt_secret: konnect-sandbox-crt }
+  #           - { namespace: kong-dev, crt_secret: konnect-dev-crt }
 
-    - name: Create the deck.yaml secret
-      kubernetes.core.k8s:
-        state: present
-        definition: 
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: deck
-            namespace: "{{ item }}"
-          type: Opaque
-          stringData:
-            .deck.yaml: |-
-              konnect-email: "{{ konnect_email }}"
-              konnect-password: "{{ konnect_pass }}"
-      loop: 
-        - kong-sandbox
-        - kong-dev
+  #   - name: Create the deck.yaml secret
+  #     kubernetes.core.k8s:
+  #       state: present
+  #       definition: 
+  #         apiVersion: v1
+  #         kind: Secret
+  #         metadata:
+  #           name: deck
+  #           namespace: "{{ item }}"
+  #         type: Opaque
+  #         stringData:
+  #           .deck.yaml: |-
+  #             konnect-email: "{{ konnect_email }}"
+  #             konnect-password: "{{ konnect_pass }}"
+  #     loop: 
+  #       - kong-sandbox
+  #       - kong-dev
     

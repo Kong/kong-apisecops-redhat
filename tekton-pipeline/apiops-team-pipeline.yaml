@@ -8,18 +8,18 @@ spec:
     - name: github-host-url
       description: the github/gitea host domain
     - name: git-full-repo-name
-      description: the full git repo name (gitea/acmebank-gateway)
+      description: the full git repo name (gitea/acmebank-apiops-gateway)
+      default: gitea/acmebank-apiops-gateway
     - name: git-branch
       description: branch to pull down
     - name: api-spec-file
       description: insomnia apispec id to be tested
     - name: api-spec-src
       description: path to the api-spec-file
-    - name: konnect-runtime-group
+    - name: konnect-runtime-group-name
       description: the konnect runtime group where the apispec will be synced to
   workspaces:
     - name: source
-    - name: github-basic-auth
     - name: deck
   tasks:
     - name: fetch-repository

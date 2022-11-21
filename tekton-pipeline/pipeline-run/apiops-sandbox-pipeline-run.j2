@@ -8,14 +8,18 @@ spec:
   pipelineRef: 
     name: api-gateway-sandbox-pipeline
   params:
-    - name: git-url
+    - name: github-host-url
       value: {{ protocol }}://{{ github_domain }}
+    - name: git-full-repo-name
+      value: gitea/acmebank-apiops-gateway
     - name: git-branch
       value: disputes-v1.1.0
     - name: api-spec-file
       value: apispec_disputes.yml
     - name: api-spec-src
       value: disputes
+    - name: konnect-runtime-group
+      value: {{ konnect_runtime_group }}
   taskRunSpecs: 
     - pipelineTaskName: update-pr
       taskServiceAccountName: build-bot
