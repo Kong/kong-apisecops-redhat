@@ -1,0 +1,20 @@
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  generateName: init-konnect-runtimegroups-
+spec:
+  taskRef:
+    name: deck-cli
+  workspaces: 
+    - name: source 
+      configMap:
+        name: konnect
+    - name: deck
+      secret:
+        secretName: deck
+  params: 
+    - name: SCRIPT
+      value: |
+        #!/usr/bin/env sh
+        deck sync --select-tag global --state deck-sandbox.yaml --konnect-runtime-group-name default
+

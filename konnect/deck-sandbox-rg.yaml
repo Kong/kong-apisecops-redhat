@@ -1,0 +1,57 @@
+_format_version: "3.0"
+_konnect:
+  runtime_group_name: default
+consumers:
+- tags:
+  - global
+  username: Jane
+plugins:
+- config:
+    anonymous: null
+    hide_credentials: true
+    key_in_body: false
+    key_in_header: true
+    key_in_query: false
+    key_names:
+    - apikey
+    run_on_preflight: true
+  enabled: true
+  name: key-auth
+  protocols:
+  - grpc
+  - grpcs
+  - http
+  - https
+  tags:
+  - global
+- config:
+    day: null
+    fault_tolerant: true
+    header_name: null
+    hide_client_headers: false
+    hour: null
+    limit_by: consumer
+    minute: 5
+    month: null
+    path: null
+    policy: local
+    redis_database: 0
+    redis_host: null
+    redis_password: null
+    redis_port: 6379
+    redis_server_name: null
+    redis_ssl: false
+    redis_ssl_verify: false
+    redis_timeout: 2000
+    redis_username: null
+    second: null
+    year: null
+  enabled: true
+  name: rate-limiting
+  protocols:
+  - grpc
+  - grpcs
+  - http
+  - https
+  tags:
+  - global
