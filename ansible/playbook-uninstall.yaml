@@ -1,0 +1,17 @@
+
+---
+- name: 'Uninstall Kong APISecOps Demo'
+  hosts: localhost
+  connection: local
+  tasks: 
+
+    - name: "Helm Uninstall {{ item }} Dataplane"
+      kubernetes.core.helm:
+        name: konnect-dp
+        chart_ref: kong/kong
+        release_namespace: "{{ item }}"
+        state: absent
+        wait: true 
+      loop:
+        - kong-sandbox
+        - kong-dev 
