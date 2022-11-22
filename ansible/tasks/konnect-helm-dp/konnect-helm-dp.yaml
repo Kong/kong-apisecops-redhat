@@ -10,6 +10,7 @@
 
     - name: "Deploy {{ namespace }} Dataplane"
       kubernetes.core.helm:
+        state: present
         name: konnect-dp
         chart_ref: kong/kong
         release_namespace: "{{ namespace }}"
