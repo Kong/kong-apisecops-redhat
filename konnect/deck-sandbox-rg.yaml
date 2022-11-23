@@ -1,8 +1,12 @@
 _format_version: "3.0"
+_info:
+  select_tags:
+  - global
 _konnect:
   runtime_group_name: default
 consumers:
-- tags:
+- custom_id: Jane
+  tags:
   - global
   username: Jane
 plugins:

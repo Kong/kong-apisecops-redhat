@@ -5,34 +5,34 @@
   connection: local
   tasks: 
 
-#     - name: Install Operators 
-#       kubernetes.core.k8s: 
-#         state: present
-#         src: "{{ item }}"
-#       loop: 
-#         - ../operator/subs-pipelines.yaml
-#         - ../operator/subs-cert-manager.yaml
+    - name: Install Operators 
+      kubernetes.core.k8s: 
+        state: present
+        src: "{{ item }}"
+      loop: 
+        - ../operator/subs-pipelines.yaml
+        - ../operator/subs-cert-manager.yaml
 
-# # cert manager
-#     - name: Create the SelfSigned Issuer
-#       block: 
-#         - name: SelfSigned Issuer Configuration
-#           kubernetes.core.k8s: 
-#             state: present
-#             src: "../operator/cert-manager/cluster_issuer_selfsigned.yaml"
+# cert manager
+    - name: Create the SelfSigned Issuer
+      block: 
+        - name: SelfSigned Issuer Configuration
+          kubernetes.core.k8s: 
+            state: present
+            src: "../operator/cert-manager/cluster_issuer_selfsigned.yaml"
 
-#         - name: Wait for the SelfSigned Issuer to be Ready 
-#           kubernetes.core.k8s:
-#             definition:
-#               apiVersion: cert-manager.io/v1
-#               kind: ClusterIssuer
-#               metadata:
-#                 name: selfsigned-issuer
-#             wait: yes 
-#             wait_condition:
-#               type: Ready
-#               status: True
-#               reason: IsReady
+        - name: Wait for the SelfSigned Issuer to be Ready 
+          kubernetes.core.k8s:
+            definition:
+              apiVersion: cert-manager.io/v1
+              kind: ClusterIssuer
+              metadata:
+                name: selfsigned-issuer
+            wait: yes 
+            wait_condition:
+              type: Ready
+              status: True
+              reason: IsReady
 
     - name: Create App Namespaces
       kubernetes.core.k8s:
@@ -90,6 +90,11 @@
         state: present
         namespace: gitea
         src: "../gitea/gitea-init-taskrun.yaml"
+        wait: yes 
+        wait_condition:
+          type: Succeeded
+          status: True
+          reason: Succeeded
 
 # deploy general secrets to app namespaces 
     - name: Fetch the github-token secret to App Namespaces

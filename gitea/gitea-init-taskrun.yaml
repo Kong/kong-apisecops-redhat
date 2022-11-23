@@ -54,7 +54,7 @@ spec:
             print("Created admin user {}:{}".format(gitea_user, gitea_pwd))
         
           # create git repo acmebank-disputes-apispec
-          data_repo = '{"clone_addr": "https://github.com/DaniellaFreese/insomnia-helloworld.git", "uid": 1, "repo_name": "acmebank-disputes-apispec"}'
+          data_repo = '{"clone_addr": "https://github.com/DaniellaFreese/apisecops-disputes.git", "uid": 1, "repo_name": "acmebank-disputes-apispec"}'
           headers = {'Content-Type': 'application/json'}
           resp = requests.post(url = giteaURL + "/api/v1/repos/migrate", headers = headers, auth = (gitea_user, gitea_pwd), data = data_repo)  
 
