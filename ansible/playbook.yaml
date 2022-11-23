@@ -108,11 +108,13 @@
         - ret.rc == 1 
         - "'error when patching' not in ret.stderr"
 
-    - name: Deploy Pipeline Github Basic Auth Secret
+    - name: Deploy Pipeline Secets - github-basic-auth - deck
       kubernetes.core.k8s:
         state: present 
         namespace: "{{ item }}"
         template: "../tekton-pipeline/config/pipeline-secrets.j2.yaml"
+      vars: 
+        github_domain: "{{ gitea_route.spec.host }}"
       loop: 
         - disputes-apispec
         - apiops-gateway 
