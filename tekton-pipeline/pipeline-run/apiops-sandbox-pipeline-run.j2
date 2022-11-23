@@ -18,8 +18,8 @@ spec:
       value: apispec_disputes.yml
     - name: api-spec-src
       value: disputes
-    - name: konnect-runtime-group
-      value: {{ konnect_runtime_group }}
+    - name: konnect-runtime-group-name
+      value: {{ konnect_runtime_group_name }}
   taskRunSpecs: 
     - pipelineTaskName: update-pr
       taskServiceAccountName: build-bot
