@@ -72,21 +72,8 @@ spec:
             workingDir: $(workspaces.source.path)
             script: | 
               #!/usr/bin/env sh
-              spectral lint apiops-gateway/api/$(params.API-SPEC-SRC)/$(params.API-SPEC-FILE) --ruleset apiops-gateway/api-guidelines/spectral.yaml
-    - name: add-mock-plugin-sandbox
-      taskRef: 
-        name: yq 
-      runAfter: 
-        - deck-konnect-prepare
-      workspaces: 
-        - name: source 
-          workspace: source
-      params: 
-        - name: SCRIPT 
-          value: | 
-            apispec=$(cat apiops-gateway/api/$(params.api-spec-src)/$(params.api-spec-file)
-            echo TODO 
-    - name: inso-generate-deck
+              spectral lint apiops-gateway/api/$(params.API-SPEC-SRC)/$(params.API-SPEC-FILE) --ruleset apiops-gateway/api-guidelines/spectral.yaml            
+    - name: inso-gen-deck
       taskRef: 
         name: inso-cli
       runAfter: 
@@ -98,12 +85,12 @@ spec:
       params: 
         - name: SCRIPT
           value: >
-            inso generate config --tags $(params.api-spec-src) apiops-gateway/api/$(params.api-spec-src)/devportal/$(params.api-spec-file) --type declarative --ci --output apiops-gateway/api/$(params.api-spec-src)/deck/kong_$(params.api-spec-src).yml
+            inso generate config --tags $(params.api-spec-src) apiops-gateway/api/$(params.api-spec-src)/$(params.api-spec-file) --type declarative --ci --output apiops-gateway/api/$(params.api-spec-src)/deck/kong_$(params.api-spec-src).yml
     - name: deck-convert-kong-3
       taskRef:
         name: deck-cli
       runAfter: 
-        - inso-generate-deck
+        - inso-gen-deck
       workspaces: 
         - name: source
           workspace: source
@@ -113,31 +100,23 @@ spec:
             #!/usr/bin/env sh 
             deck convert --yes --from kong-gateway-2.x --to kong-gateway-3.x --input-file apiops-gateway/api/$(params.api-spec-src)/deck/kong_$(params.api-spec-src).yml --output-file apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml
             rm apiops-gateway/api/$(params.api-spec-src)/deck/kong_$(params.api-spec-src).yml
-    - name: deck-konnect-prepare
-      taskRef:
+    - name: mocking-plugin
+      taskRef: 
         name: yq
       runAfter: 
         - deck-convert-kong-3
       workspaces: 
         - name: source 
-          workspace: source
+          workspace: source 
       params: 
         - name: SCRIPT
           value: | 
-            /usr/bin/yq -i '._info.select_tags += ["disputes"]' apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml
-
-            /usr/bin/yq -i 'with(._konnect.runtime_group_name; .= "default")' apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml
-            
-            /usr/bin/yq -i yq -i '.services[].tags += ["_KonnectService:Disputes"]'
-            
-            /usr/bin/yq -i 'sort_keys(.)' apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml
-            
-            rm apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml 
+            mock=$(cat apiops-gateway/api/$(params.api-spec-src)/$(params.api-spec-file)) /usr/bin/yq -i 'with(.services[]; .name = "disputes" | .plugins = [{"config": {"api_specification": strenv(mock)}, "enabled": true, "name": "mocking"}])' apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml
     - name: deck-sync
       taskRef: 
         name: deck-cli
       runAfter: 
-        - deck-konnect-prepare
+        - mocking-plugin
       workspaces: 
         - name: source 
           workspace: source 
@@ -149,23 +128,9 @@ spec:
             #!/usr/bin/env sh
             ls -al
             deck sync --state apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml --konnect-runtime-group-name $(params.konnect-runtime-group-name)
-    - name: yq-devportal-apispec
-      taskRef: 
-        name: yq
-      runAfter: 
-        - deck-sync
-      workspaces: 
-        - name: source 
-          workspace: source
-      params: 
-        - name: SCRIPT
-          value: |
-            #  TODO fix servers 
-            /usr/bin/yq 'del(.servers[] | select (.url == "*")) | .servers += {"url":"http://acdaa8a022deb4e7bbe48b057e729a9e-1554818984.us-west-2.elb.amazonaws.com/api/v1", "description": "sandbox-gateway-env"}' apiops-gateway/api/$(params.api-spec-src)/$(params.api-spec-file) > apiops-gateway/api/$(params.api-spec-src)/devportal/$(params.api-spec-file)
-            # TODO remove kong-plugin references
     - name: update-pr
       runAfter:
-        - yq-devportal-apispec
+        - deck-sync
       workspaces: 
         - name: source
           workspace: source
@@ -188,7 +153,7 @@ spec:
             #!/usr/bin/env sh
             cd apiops-gateway 
             git config --global user.email "apiopsbot@gmail.com"
-            git config --global user.name "apioops"
+            git config --global user.name "apiops-bot"
             echo =====check git status =========
             git switch $(params.GIT-BRANCH)
             git branch
