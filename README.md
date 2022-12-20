@@ -17,7 +17,7 @@ Dev Team Persona - APISpec Design is complete, pr to security team for review an
 Execute Pipeline 1:
 
 ```console
-oc create -f run/1-disputes-pipeline-run.yaml
+oc create -f run/disputes-pipeline-run.yaml
 ```
 
 ### Step 2
@@ -27,7 +27,7 @@ APIOps Persona - automatically validate the new apispec, and deploy to sandbox f
 Exuecte Pipeline 2:
 
 ```consoles
-oc create -f run/2-apiops-sandbox-pipeline-run.yaml
+oc create -f run/apiops-sandbox-pipeline-run.yaml
 ```
 
 ### Step 3

@@ -170,67 +170,67 @@
         - disputes-pipeline-run
         - apiops-sandbox-pipeline-run
 
-  # # Konnect
-  #   - name: Create Konnect Dataplane Namespaces
-  #     kubernetes.core.k8s:
-  #       api_version: v1
-  #       kind: Namespace
-  #       name: "{{ item }}"
-  #       state: present
-  #     loop: 
-  #       - kong-sandbox 
-  #       - kong-dev
+  # Konnect
+    - name: Create Konnect Dataplane Namespaces
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Namespace
+        name: "{{ item }}"
+        state: present
+      loop: 
+        - kong-sandbox 
+        - kong-dev
     
-  #   - name: Create Konnect Dataplanes
-  #     block: 
-  #       - name: Create Konnect Certs
-  #         include_tasks: tasks/konnect-cert/konnect-cert.yaml
-  #         vars: 
-  #           namespace: "{{ item.namespace }}"
-  #           crt_secret: "{{ item.crt_secret }}"
-  #         loop: 
-  #           - { namespace: kong-sandbox, crt_secret: konnect-sandbox-crt }
-  #           - { namespace: kong-dev, crt_secret: konnect-dev-crt }
+    - name: Create Konnect Dataplanes
+      block: 
+        - name: Create Konnect Certs
+          include_tasks: tasks/konnect-cert/konnect-cert.yaml
+          vars: 
+            namespace: "{{ item.namespace }}"
+            crt_secret: "{{ item.crt_secret }}"
+          loop: 
+            - { namespace: kong-sandbox, crt_secret: konnect-sandbox-crt }
+            - { namespace: kong-dev, crt_secret: konnect-dev-crt }
             
         
-  #       - name: Deploy Konnect Dataplanes
-  #         include_tasks: tasks/konnect-helm-dp/konnect-helm-dp.yaml
-  #         vars: 
-  #           namespace: "{{ item.namespace }}"
-  #           crt_secret: "{{ item.crt_secret }}"
-  #         loop: 
-  #           - { namespace: kong-sandbox, crt_secret: konnect-sandbox-crt }
-  #           - { namespace: kong-dev, crt_secret: konnect-dev-crt }
+        - name: Deploy Konnect Dataplanes
+          include_tasks: tasks/konnect-helm-dp/konnect-helm-dp.yaml
+          vars: 
+            namespace: "{{ item.namespace }}"
+            crt_secret: "{{ item.crt_secret }}"
+          loop: 
+            - { namespace: kong-sandbox, crt_secret: konnect-sandbox-crt }
+            - { namespace: kong-dev, crt_secret: konnect-dev-crt }
 
-  #   - name: Konnect - Create the deck.yaml secret
-  #     kubernetes.core.k8s:
-  #       state: present
-  #       definition: 
-  #         apiVersion: v1
-  #         kind: Secret
-  #         metadata:
-  #           name: deck
-  #           namespace: "{{ item }}"
-  #         type: Opaque
-  #         stringData:
-  #           .deck.yaml: |-
-  #             konnect-email: "{{ konnect_email }}"
-  #             konnect-password: "{{ konnect_pass }}"
-  #     loop: 
-  #       - kong-sandbox
-  #       - kong-dev
+    - name: Konnect - Create the deck.yaml secret
+      kubernetes.core.k8s:
+        state: present
+        definition: 
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: deck
+            namespace: "{{ item }}"
+          type: Opaque
+          stringData:
+            .deck.yaml: |-
+              konnect-email: "{{ konnect_email }}"
+              konnect-password: "{{ konnect_pass }}"
+      loop: 
+        - kong-sandbox
+        - kong-dev
 
-  #   - name: Konnect - Day 2 Operations Sandbox (Default Runtime Group)
-  #     block: 
-  #       - name: Create ConfigMap Kong-Sandbox
-  #         kubernetes.core.k8s:
-  #           state: present
-  #           namespace: apiops-gateway
-  #           src: "../konnect/konnect-configmap.yaml"
+    - name: Konnect - Day 2 Operations Sandbox (Default Runtime Group)
+      block: 
+        - name: Create ConfigMap Kong-Sandbox
+          kubernetes.core.k8s:
+            state: present
+            namespace: apiops-gateway
+            src: "../konnect/konnect-configmap.yaml"
 
-  #       - name: Konnect Sandbox Runtimegroup TaskRun Init   
-  #         kubernetes.core.k8s:
-  #           state: present
-  #           namespace: apiops-gateway
-  #           src: "../konnect/konnect-init-taskrun.yaml"      
+        - name: Konnect Sandbox Runtimegroup TaskRun Init   
+          kubernetes.core.k8s:
+            state: present
+            namespace: apiops-gateway
+            src: "../konnect/konnect-init-taskrun.yaml"      
     
