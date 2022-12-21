@@ -8,12 +8,23 @@
     - name: Install Operators 
       kubernetes.core.k8s: 
         state: present
-        src: "{{ item }}"
+        src: "{{ item.operator }}"
       loop: 
-        - ../operator/subs-pipelines.yaml
-        - ../operator/subs-cert-manager.yaml
+        - { operator: '../operator/subs-pipelines.yaml' }
+        - { operator: '../operator/subs-cert-manager.yaml'}
 
-# cert manager
+    - name: Wait for Operators to be Ready
+      kubernetes.core.k8s_info:
+        kind: ClusterServiceVersion
+        wait: yes 
+        wait_sleep: 10 
+        wait_timeout: 360
+        wait_condition: 
+          reason: InstallSucceeded
+          status: Unknown
+          type: Normal    
+
+# # cert manager
     - name: Create the SelfSigned Issuer
       block: 
         - name: SelfSigned Issuer Configuration
@@ -22,12 +33,10 @@
             src: "../operator/cert-manager/cluster_issuer_selfsigned.yaml"
 
         - name: Wait for the SelfSigned Issuer to be Ready 
-          kubernetes.core.k8s:
-            definition:
-              apiVersion: cert-manager.io/v1
-              kind: ClusterIssuer
-              metadata:
-                name: selfsigned-issuer
+          kubernetes.core.k8s_info:
+            api_version: cert-manager.io/v1
+            kind: ClusterIssuer
+            name: selfsigned-issuer
             wait: yes 
             wait_condition:
               type: Ready
@@ -42,9 +51,9 @@
         state: present
       loop: 
         - disputes-apispec
-        - disputes-dev
         - apiops-gateway
         - gitea
+        - disputes-dev
 
 # deploy and configure gitea
     - name: Deploy Gitea Route
@@ -220,7 +229,7 @@
         - kong-sandbox
         - kong-dev
 
-    - name: Konnect - Day 2 Operations Sandbox (Default Runtime Group)
+    - name: Konnect - Sandbox (Default Runtime Group)
       block: 
         - name: Create ConfigMap Kong-Sandbox
           kubernetes.core.k8s:
@@ -228,9 +237,25 @@
             namespace: apiops-gateway
             src: "../konnect/konnect-configmap.yaml"
 
-        - name: Konnect Sandbox Runtimegroup TaskRun Init   
+        - name: Konnect Sandbox Plugin Configuration - TaskRun Init   
           kubernetes.core.k8s:
             state: present
             namespace: apiops-gateway
-            src: "../konnect/konnect-init-taskrun.yaml"      
-    
+            src: "../konnect/konnect-init-taskrun.yaml"
+  
+  # Disputes Microservice
+    - name: Deploy Disputes Microservice
+      block:
+        - name: Create Disputes Dev Namespaces
+          kubernetes.core.k8s:
+            api_version: v1
+            kind: Namespace
+            name: disputes-dev
+            state: present
+
+        - name: Disputes Dev - Kubernetes Deploy and SVC
+          kubernetes.core.k8s:
+            state: present
+            namespace: disputes-dev
+            src: "../disputes/disputes.yaml"
+
