@@ -1,11 +1,10 @@
 _format_version: "3.0"
-_info:
-  select_tags:
-  - global
 _konnect:
   runtime_group_name: default
 consumers:
 - custom_id: Jane
+  keyauth_credentials:
+  - key: konnect
   tags:
   - global
   username: Jane
@@ -30,6 +29,8 @@ plugins:
   - global
 - config:
     day: null
+    error_code: 429
+    error_message: API rate limit exceeded
     fault_tolerant: true
     header_name: null
     hide_client_headers: false

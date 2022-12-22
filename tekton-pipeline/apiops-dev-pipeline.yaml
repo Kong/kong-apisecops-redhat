@@ -1,0 +1,86 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: api-gateway-dev-pipeline
+spec:
+  params:
+    - name: github-host-url
+      description: the github/gitea host domain
+    - name: git-full-repo-name
+      description: the full git repo name (gitea/acmebank-apiops-gateway)
+      default: gitea/acmebank-apiops-gateway
+    - name: git-branch
+      description: branch to pull down
+    - name: microservice
+      description: name of the microservice to update and manage
+    - name: konnect-runtime-group-name 
+      description: the konnect runtime group where the apispec will be synced to
+  workspaces:
+    - name: source
+    - name: deck
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      workspaces:
+        - name: output
+          workspace: source
+      params:
+        - name: url
+          value: $(params.github-host-url)/$(params.git-full-repo-name)
+        - name: revision
+          value: "$(params.git-branch)"
+        - name: deleteExisting
+          value: "true"
+        - name: subdirectory
+          value: apiops-gateway
+    - name: deck-dev-create
+      taskRef: 
+        name: yq
+      runAfter: 
+        - fetch-repository
+      workspaces: 
+        - name: source
+          workspace: source
+      params: 
+        - name: SCRIPT
+          value: |
+            /usr/bin/yq -i 'with(.services[]; .host = "$(params.microservice).$(params.microservice)-dev.svc.cluster.local" )' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
+            /usr/bin/yq -i 'del(.services.[] | select(.name == "$(params.microservice)").plugins)' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
+    - name: deck-sync
+      taskRef:
+        name: deck-cli
+      runAfter:
+        - deck-dev-create
+      workspaces: 
+        - name: source
+          workspace: source
+        - name: deck 
+          workspace: deck
+      params:
+        - name: SCRIPT
+          value: | 
+            #!/usr/bin/env sh
+            ls -al
+            deck sync --state apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml --konnect-runtime-group-name $(params.konnect-runtime-group-name)
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: api-gateway-dev-pvc
+spec:
+  resources:
+    requests:s
+      storage: 16Mi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: build-bot 
+secrets:
+  - name: github-basic-auth

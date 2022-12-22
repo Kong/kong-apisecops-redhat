@@ -165,7 +165,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: api-gateway-dev-pvc
+  name: api-gateway-sandbox-pvc
 spec:
   resources:
     requests:

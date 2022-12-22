@@ -28,41 +28,31 @@
 
     - name: "Push Certificates to Konnect: {{ crt_secret }}"
       block:
-        - name: Authenticate to Konnect
-          ansible.builtin.uri:
-            url: "https://{{ base_url }}/kauth/api/v1/authenticate"
-            method: POST
-            body_format: json
-            body: '{ "username": "{{ konnect_email }}", "password":"{{ konnect_pass }}" }'
-            return_content: yes
-          register: login
-
-        - name: login output response
-          debug: 
-            var: login
-
         - name: GET Konnect Control Plane Data
           ansible.builtin.uri:
-            url: "https://{{ base_url }}/api/runtime_groups/{{ konnect_controlPlane }}"
+            url: "https://{{ api_url }}/v2/runtime-groups?filter%5Bname%5D%5Beq%5D={{ runtime_group }}"
             method: GET
             return_content: yes
             headers:
               Cookie: "{{ login.cookies_string }}"
           register: cp_content
+        
+        - ansible.builtin.debug: 
+            var: cp_content
 
         - name: Control Plane Facts
           ansible.builtin.set_fact:
-            konnect_cp_id: "{{ cp_content.json['id'] }}"
-            konnect_cp_name: "{{ cp_content.json['name']}}"
-            konnect_cp_endpoint: "{{ cp_content.json['config']['cp_outlet'] | regex_replace('https://') | regex_replace('/') }}"
-            konnect_tp_endpoint: "{{cp_content.json['config']['telemetry_endpoint'] | regex_replace('https://') | regex_replace('/') }}"
+            konnect_cp_id: "{{ cp_content.json.data[0]['id'] }}"
+            konnect_cp_name: "{{ cp_content.json.data[0]['name']}}"
+            konnect_cp_endpoint: "{{ cp_content.json.data[0]['config']['control_plane_endpoint'] | regex_replace('https://') | regex_replace('/') }}"
+            konnect_tp_endpoint: "{{cp_content.json.data[0]['config']['telemetry_endpoint'] | regex_replace('https://') | regex_replace('/') }}"
 
         - debug: 
             msg: '{ "name": "{{ konnect_cp_name }}", "id" :"{{ konnect_cp_id }}", "certificates": ["{{ crt }}"] }'
 
         - name: PUT Dataplane Cert to Konnect
           ansible.builtin.uri:
-            url: "https://{{ base_url }}/api/runtime_groups/{{ konnect_controlPlane }}"
+            url: "https://{{ base_url }}/api/runtime_groups/{{ konnect_cp_id }}"
             method: PUT
             body_format: json
             body: '{ "name": "{{ konnect_cp_name }}", "id" :"{{ konnect_cp_id }}", "certificates": ["{{ crt }}"] }'
@@ -75,4 +65,5 @@
             var: cert_request
 
       vars:
+        api_url: "us.api.konghq.com"
         base_url: "cloud.konghq.com"

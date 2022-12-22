@@ -3,15 +3,26 @@
 - name: 'Install Kong APISecOps Demo'
   hosts: localhost
   connection: local
-  tasks: 
+  vars: 
+    konnect: 
+      - runtime_group: default
+        namespace: kong-sandbox
+        crt_secret: konnect-sandbox-crt
+        pipeline_namespace: apiops-gateway
+      - runtime_group: dev
+        namespace: kong-dev
+        crt_secret: konnect-dev-crt
+        pipeline_namespace: apiops-gateway
 
+  tasks: 
+  # operators Cert Manager and Openshift Pipelines
     - name: Install Operators 
       kubernetes.core.k8s: 
         state: present
-        src: "{{ item.operator }}"
+        src: "operator/{{ item }}"
       loop: 
-        - { operator: '../operator/subs-pipelines.yaml' }
-        - { operator: '../operator/subs-cert-manager.yaml'}
+        - subs-pipelines.yaml 
+        - subs-cert-manager.yaml
 
     - name: Wait for Operators to be Ready
       kubernetes.core.k8s_info:
@@ -24,13 +35,13 @@
           status: Unknown
           type: Normal    
 
-# # cert manager
+# cert manager configuration
     - name: Create the SelfSigned Issuer
       block: 
         - name: SelfSigned Issuer Configuration
           kubernetes.core.k8s: 
             state: present
-            src: "../operator/cert-manager/cluster_issuer_selfsigned.yaml"
+            src: "operator/cert-manager/cluster_issuer_selfsigned.yaml"
 
         - name: Wait for the SelfSigned Issuer to be Ready 
           kubernetes.core.k8s_info:
@@ -55,12 +66,12 @@
         - gitea
         - disputes-dev
 
-# deploy and configure gitea
+# Gitea - deploy and configure
     - name: Deploy Gitea Route
       kubernetes.core.k8s: 
         state: present
         namespace: gitea
-        src: "../gitea/gitea-route.yaml"
+        src: "gitea/gitea-route.yaml"
     
     - name: Get Gitea Route 
       set_fact: 
@@ -70,7 +81,7 @@
       kubernetes.core.k8s:
         state: present
         namespace: gitea
-        template: "../gitea/gitea-configmap.j2.yaml"
+        template: "gitea/gitea-configmap.j2.yaml"
       vars: 
         gitea_domain: "{{ gitea_route.spec.host }}"
     
@@ -78,16 +89,14 @@
       kubernetes.core.k8s:
         state: present
         namespace: gitea
-        src: "../gitea/gitea.yaml" 
+        src: "gitea/gitea.yaml"
 
     - name: Wait on Gitea Deploy Ready
-      kubernetes.core.k8s:
-        definition:
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: gitea
-            namespace: gitea
+      kubernetes.core.k8s_info:
+        api_version: apps/v1
+        kind: Deployment
+        name: gitea
+        namespace: gitea
         wait: yes 
         wait_condition:
           type: Available
@@ -98,7 +107,7 @@
       kubernetes.core.k8s:
         state: present
         namespace: gitea
-        src: "../gitea/gitea-init-taskrun.yaml"
+        src: "gitea/gitea-init-taskrun.yaml"
         wait: yes 
         wait_condition:
           type: Succeeded
@@ -146,9 +155,9 @@
       kubernetes.core.k8s: 
         state: present
         namespace: disputes-apispec
-        src: "../tekton-pipeline/disputes-team-pipeline.yaml"
+        src: "../tekton-pipeline/disputes-apispec-review-pipeline.yaml"
     
-# configure ApiOps-gateway Namespace
+# configure apiops-gateway Namespace
     - name: Apply Tekton Tasks to APIOps Namespace
       kubernetes.core.k8s: 
         state: present 
@@ -161,11 +170,14 @@
         - ../tekton-tasks/kong-tekton-tasks/deck-cli/0.1/deck-cli.yaml
         - ../tekton-tasks/kong-tekton-tasks/inso-cli/0.1/inso-cli.yaml
 
-    - name: Apply APIOPS Pipeline
+    - name: Apply APIOPS Pipelines
       kubernetes.core.k8s: 
         state: present
         namespace: apiops-gateway
-        src: "../tekton-pipeline/apiops-team-pipeline.yaml"
+        src: "../tekton-pipeline/{{ item }}.yaml"
+      loop: 
+        - apiops-sandbox-pipeline
+        - apiops-dev-pipeline
     
     - name: Create PipelineRuns 
       ansible.builtin.template: 
@@ -178,84 +190,22 @@
       loop: 
         - disputes-pipeline-run
         - apiops-sandbox-pipeline-run
+        - apiops-dev-pipeline-run
 
-  # Konnect
-    - name: Create Konnect Dataplane Namespaces
-      kubernetes.core.k8s:
-        api_version: v1
-        kind: Namespace
-        name: "{{ item }}"
-        state: present
-      loop: 
-        - kong-sandbox 
-        - kong-dev
-    
-    - name: Create Konnect Dataplanes
-      block: 
-        - name: Create Konnect Certs
-          include_tasks: tasks/konnect-cert/konnect-cert.yaml
-          vars: 
-            namespace: "{{ item.namespace }}"
-            crt_secret: "{{ item.crt_secret }}"
-          loop: 
-            - { namespace: kong-sandbox, crt_secret: konnect-sandbox-crt }
-            - { namespace: kong-dev, crt_secret: konnect-dev-crt }
-            
-        
-        - name: Deploy Konnect Dataplanes
-          include_tasks: tasks/konnect-helm-dp/konnect-helm-dp.yaml
-          vars: 
-            namespace: "{{ item.namespace }}"
-            crt_secret: "{{ item.crt_secret }}"
-          loop: 
-            - { namespace: kong-sandbox, crt_secret: konnect-sandbox-crt }
-            - { namespace: kong-dev, crt_secret: konnect-dev-crt }
-
-    - name: Konnect - Create the deck.yaml secret
-      kubernetes.core.k8s:
-        state: present
-        definition: 
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: deck
-            namespace: "{{ item }}"
-          type: Opaque
-          stringData:
-            .deck.yaml: |-
-              konnect-email: "{{ konnect_email }}"
-              konnect-password: "{{ konnect_pass }}"
-      loop: 
-        - kong-sandbox
-        - kong-dev
-
-    - name: Konnect - Sandbox (Default Runtime Group)
-      block: 
-        - name: Create ConfigMap Kong-Sandbox
-          kubernetes.core.k8s:
-            state: present
-            namespace: apiops-gateway
-            src: "../konnect/konnect-configmap.yaml"
-
-        - name: Konnect Sandbox Plugin Configuration - TaskRun Init   
-          kubernetes.core.k8s:
-            state: present
-            namespace: apiops-gateway
-            src: "../konnect/konnect-init-taskrun.yaml"
+#   # Konnect
+    - name: Create Konnect Runtime Groups and Dataplanes
+      include_tasks: tasks/konnect/konnect-dp.yaml
+      vars: 
+        runtime_group: "{{ item.runtime_group }}"
+        namespace: "{{ item.namespace }}"
+        crt_secret: "{{ item.crt_secret }}"
+        pipeline_namespace: "{{ item.pipeline_namespace }}"
+      loop: "{{ konnect }}"
   
   # Disputes Microservice
-    - name: Deploy Disputes Microservice
-      block:
-        - name: Create Disputes Dev Namespaces
-          kubernetes.core.k8s:
-            api_version: v1
-            kind: Namespace
-            name: disputes-dev
-            state: present
-
-        - name: Disputes Dev - Kubernetes Deploy and SVC
-          kubernetes.core.k8s:
-            state: present
-            namespace: disputes-dev
-            src: "../disputes/disputes.yaml"
+    - name: Disputes Dev - Kubernetes Deploy and SVC
+      kubernetes.core.k8s:
+        state: present
+        namespace: disputes-dev
+        src: "disputes/disputes.yaml"
 

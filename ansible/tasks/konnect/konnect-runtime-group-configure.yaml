@@ -1,0 +1,27 @@
+
+- name: "Create the deck.yaml secret - {{ runtime_group }} Runtime Group"
+  kubernetes.core.k8s:
+    state: present
+    definition: 
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: deck
+        namespace: "{{ namespace }}"
+      type: Opaque
+      stringData:
+        .deck.yaml: |-
+          konnect-email: "{{ konnect_email }}"
+          konnect-password: "{{ konnect_pass }}"
+
+- name: "Create Deck ConfigMap - {{ runtime_group }} Runtime Group"
+  kubernetes.core.k8s:
+    state: present 
+    namespace: "{{ pipeline_namespace }}"
+    template: deck-configmap.j2.yaml
+    
+- name: "TaskRun Init - Deck sync - {{ runtime_group }} Runtime Group"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ pipeline_namespace }}"
+    template: init-taskrun-deck.j2.yaml

@@ -1,17 +1,16 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: konnect
+  name: deck-{{ runtime_group }}-rg
 data:
-  deck-sandbox-rg.yaml: |
+  deck.yaml: |
     _format_version: "3.0"
-    _info:
-      select_tags:
-      - global
     _konnect:
-      runtime_group_name: default
+      runtime_group_name: {{ runtime_group }}
     consumers:
     - custom_id: Jane
+      keyauth_credentials:
+      - key: konnect
       tags:
       - global
       username: Jane
@@ -36,6 +35,8 @@ data:
       - global
     - config:
         day: null
+        error_code: 429
+        error_message: API rate limit exceeded
         fault_tolerant: true
         header_name: null
         hide_client_headers: false
@@ -65,3 +66,4 @@ data:
       - https
       tags:
       - global
+
