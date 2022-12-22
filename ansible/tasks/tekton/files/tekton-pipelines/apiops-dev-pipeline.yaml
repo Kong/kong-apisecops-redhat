@@ -72,7 +72,7 @@ metadata:
   name: api-gateway-dev-pvc
 spec:
   resources:
-    requests:s
+    requests:
       storage: 16Mi
   volumeMode: Filesystem
   accessModes:

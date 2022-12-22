@@ -5,7 +5,7 @@
 Deploy the Openshift Infrastructure
 
 ```console
-ansible-playbook ansible/playbook.yaml --extra-vars "konnect_email=<yourEmail> konnect_pass=<yourPassword> konnect_controlPlane=<your-runtime-group-id>"
+ansible-playbook ansible/playbook.yaml --extra-vars "konnect_email=<yourEmail> konnect_pass=<yourPassword>"
 ```
 
 ## Tutorial

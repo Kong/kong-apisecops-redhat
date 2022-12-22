@@ -1,0 +1,14 @@
+---
+# tasks to deploy a generic kuberentes microservice
+    - name: Create Microservice Namespace - "{{ namespace }}"
+      kubernetes.core.k8s:
+        state: present
+        api_version: v1
+        kind: Namespace
+        name: "{{ namespace }}"
+      
+    - name: "Kubernetes Deploy and SVC - {{ namespace }}"
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ namespace }}"
+        src: "{{ manifest_path }}"

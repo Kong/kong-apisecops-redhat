@@ -1,0 +1,46 @@
+--- 
+# general tekton setup tasks for a namespace
+- name: "Create Namespace - {{ namespace }}"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ namespace }}"
+    state: present
+
+- name: "Fetch the github-token secret to Namespace {{ namespace }}"
+  shell: |
+    kubectl get secret github-token --namespace {{ gitea_namespace }} -o yaml | sed 's/namespace: .*/namespace: {{ namespace }}/' | kubectl apply -f -
+  register: ret
+  failed_when: 
+    - ret.rc == 1 
+    - "'error when patching' not in ret.stderr"
+
+- name: "Deploy Tekton Pipeline Secrets - github-basic-auth - deck - to Namespace {{ namespace }}"
+  kubernetes.core.k8s:
+    state: present 
+    namespace: "{{ namespace }}"
+    template: "secrets/pipeline-secrets.j2.yaml"
+  vars: 
+    github_domain: "{{ gitea_domain }}"
+    protocol: http
+
+- name: "Apply Tekton Tasks to Namespace {{ namespace }}"
+  kubernetes.core.k8s: 
+    state: present 
+    namespace: "{{ namespace }}"
+    src: "files/tekton-tasks/{{ tekton }}"
+  loop: 
+    - tekton-hub/git-cli.yaml
+    - tekton-hub/yq.yaml
+    - tekton-hub/github-close-issue.yaml
+    - kong/deck-cli/0.1/deck-cli.yaml
+    - kong/inso-cli/0.1/inso-cli.yaml
+  loop_control: 
+    loop_var: tekton
+
+- name: "Apply Tekton Pipelines to Namespace {{ namespace }}"
+  kubernetes.core.k8s: 
+    state: present
+    namespace: "{{ namespace }}"
+    src: "files/tekton-pipelines/{{ item }}"
+  loop: "{{ pipelines }}"

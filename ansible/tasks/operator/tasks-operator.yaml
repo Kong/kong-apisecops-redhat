@@ -1,0 +1,39 @@
+---
+# tasks to install the operators
+- name: Install Operators 
+  kubernetes.core.k8s: 
+    state: present
+    src: "files/{{ item }}"
+  loop: 
+    - subs-pipelines.yaml 
+    - subs-cert-manager.yaml
+
+- name: Wait for Operators to be Ready
+  kubernetes.core.k8s_info:
+    kind: ClusterServiceVersion
+    wait: yes 
+    wait_sleep: 10 
+    wait_timeout: 360
+    wait_condition: 
+      reason: InstallSucceeded
+      status: Unknown
+      type: Normal    
+
+# cert manager configuration
+- name: Cert Manager Configuration
+  block: 
+    - name: Create Self- Signed Issuer Configuration
+      kubernetes.core.k8s: 
+        state: present
+        src: "files/cluster_issuer_selfsigned.yaml"
+
+    - name: Wait for the SelfSigned Issuer to be Ready 
+      kubernetes.core.k8s_info:
+        api_version: cert-manager.io/v1
+        kind: ClusterIssuer
+        name: selfsigned-issuer
+        wait: yes 
+        wait_condition:
+          type: Ready
+          status: True
+          reason: IsReady

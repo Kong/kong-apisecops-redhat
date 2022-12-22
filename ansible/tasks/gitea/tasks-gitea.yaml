@@ -1,0 +1,55 @@
+---
+#gitea tasks
+- name: Create App Namespaces
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: gitea
+    state: present
+
+- name: Deploy Gitea Route
+  kubernetes.core.k8s: 
+    state: present
+    namespace: gitea
+    src: "files/gitea-route.yaml"
+
+- name: Get Gitea Route 
+  set_fact: 
+    gitea_route: "{{ lookup('kubernetes.core.k8s', kind='Route', namespace='gitea', resource_name='gitea') }}"
+
+- name: Deploy Gitea ConfigMap
+  kubernetes.core.k8s:
+    state: present
+    namespace: gitea
+    template: "gitea-configmap.j2.yaml"
+  vars: 
+    gitea_domain: "{{ gitea_route.spec.host }}"
+
+- name: Deploy Gitea 
+  kubernetes.core.k8s:
+    state: present
+    namespace: gitea
+    src: "files/gitea.yaml"
+
+- name: Wait on Gitea Deploy Ready
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    name: gitea
+    namespace: gitea
+    wait: yes 
+    wait_condition:
+      type: Available
+      status: True
+      reason: MinimumReplicasAvailable
+
+- name: Gitea Init Tekton TaskRun 
+  kubernetes.core.k8s:
+    state: present
+    namespace: gitea
+    src: "files/gitea-init-taskrun.yaml"
+    wait: yes 
+    wait_condition:
+      type: Succeeded
+      status: True
+      reason: Succeeded

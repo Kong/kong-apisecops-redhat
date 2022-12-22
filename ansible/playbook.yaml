@@ -4,6 +4,7 @@
   hosts: localhost
   connection: local
   vars: 
+    # list of konnect dataplanes and respective runtime groups that will be created 
     konnect: 
       - runtime_group: default
         namespace: kong-sandbox
@@ -14,187 +15,58 @@
         crt_secret: konnect-dev-crt
         pipeline_namespace: apiops-gateway
 
+    # list of apiops namespaces and respective tekton pipelines needed in each namespace
+    apiops: 
+      - namespace: disputes-apispec
+        pipelines: 
+          - disputes-apispec-review-pipeline.yaml
+      - namespace: apiops-gateway
+        pipelines: 
+          - apiops-sandbox-pipeline.yaml
+          - apiops-dev-pipeline.yaml
+
+    # list of pipelines runs that need to be created and placed into sub-dir run
+    pipeline_runs:
+      - disputes-pipeline-run
+      - apiops-sandbox-pipeline-run
+      - apiops-dev-pipeline-run
+    
+    # list of kuberentes microservices that need to be deployed, name of namespace to be created, and path to kuberentes manifest
+    microservices: 
+      - namespace: disputes-dev
+        manifest_path: "{{ playbook_dir}}/disputes/disputes.yaml"
+
   tasks: 
-  # operators Cert Manager and Openshift Pipelines
-    - name: Install Operators 
-      kubernetes.core.k8s: 
-        state: present
-        src: "operator/{{ item }}"
-      loop: 
-        - subs-pipelines.yaml 
-        - subs-cert-manager.yaml
+# Operators Cert Manager and Openshift Pipelines
+    - name: Create Konnect Runtime Groups and Dataplanes
+      include_tasks: tasks/operator/tasks-operator.yaml
 
-    - name: Wait for Operators to be Ready
-      kubernetes.core.k8s_info:
-        kind: ClusterServiceVersion
-        wait: yes 
-        wait_sleep: 10 
-        wait_timeout: 360
-        wait_condition: 
-          reason: InstallSucceeded
-          status: Unknown
-          type: Normal    
+# # Gitea
+    - name: Create Konnect Runtime Groups and Dataplanes
+      include_tasks: tasks/gitea/tasks-gitea.yaml
 
-# cert manager configuration
-    - name: Create the SelfSigned Issuer
-      block: 
-        - name: SelfSigned Issuer Configuration
-          kubernetes.core.k8s: 
-            state: present
-            src: "operator/cert-manager/cluster_issuer_selfsigned.yaml"
-
-        - name: Wait for the SelfSigned Issuer to be Ready 
-          kubernetes.core.k8s_info:
-            api_version: cert-manager.io/v1
-            kind: ClusterIssuer
-            name: selfsigned-issuer
-            wait: yes 
-            wait_condition:
-              type: Ready
-              status: True
-              reason: IsReady
-
-    - name: Create App Namespaces
-      kubernetes.core.k8s:
-        api_version: v1
-        kind: Namespace
-        name: "{{ item }}"
-        state: present
-      loop: 
-        - disputes-apispec
-        - apiops-gateway
-        - gitea
-        - disputes-dev
-
-# Gitea - deploy and configure
-    - name: Deploy Gitea Route
-      kubernetes.core.k8s: 
-        state: present
-        namespace: gitea
-        src: "gitea/gitea-route.yaml"
-    
-    - name: Get Gitea Route 
-      set_fact: 
-        gitea_route: "{{ lookup('kubernetes.core.k8s', kind='Route', namespace='gitea', resource_name='gitea') }}"
-
-    - name: Deploy Gitea ConfigMap
-      kubernetes.core.k8s:
-        state: present
-        namespace: gitea
-        template: "gitea/gitea-configmap.j2.yaml"
+# #APIOps 
+    - name: Create and Configure APIOps Namespace
+      include_tasks: tasks/tekton/tasks-tekton.yaml
       vars: 
+        namespace: "{{ item.namespace }}"
+        pipelines: "{{ item.pipelines }}"
         gitea_domain: "{{ gitea_route.spec.host }}"
-    
-    - name: Deploy Gitea 
-      kubernetes.core.k8s:
-        state: present
-        namespace: gitea
-        src: "gitea/gitea.yaml"
-
-    - name: Wait on Gitea Deploy Ready
-      kubernetes.core.k8s_info:
-        api_version: apps/v1
-        kind: Deployment
-        name: gitea
-        namespace: gitea
-        wait: yes 
-        wait_condition:
-          type: Available
-          status: True
-          reason: MinimumReplicasAvailable
-
-    - name: Gitea Init Tekton TaskRun 
-      kubernetes.core.k8s:
-        state: present
-        namespace: gitea
-        src: "gitea/gitea-init-taskrun.yaml"
-        wait: yes 
-        wait_condition:
-          type: Succeeded
-          status: True
-          reason: Succeeded
-
-# deploy general secrets to app namespaces 
-    - name: Fetch the github-token secret to App Namespaces
-      shell: |
-        kubectl get secret github-token --namespace gitea -o yaml | sed 's/namespace: .*/namespace: {{ item }}/' | kubectl apply -f -
-      loop: 
-        - disputes-apispec
-        - apiops-gateway 
-      register: ret
-      failed_when: 
-        - ret.rc == 1 
-        - "'error when patching' not in ret.stderr"
-
-    - name: Deploy Pipeline Secets - github-basic-auth - deck
-      kubernetes.core.k8s:
-        state: present 
-        namespace: "{{ item }}"
-        template: "../tekton-pipeline/config/pipeline-secrets.j2"
-      vars: 
-        github_domain: "{{ gitea_route.spec.host }}"
-        protocol: http
-      loop: 
-        - disputes-apispec
-        - apiops-gateway 
-
-# configure Disputes ApiSpec Namespace
-    - name: Apply Tekton Tasks to Disputes Namespace
-      kubernetes.core.k8s: 
-        state: present 
-        namespace: disputes-apispec
-        src: "{{ item }}"
-      loop: 
-        - ../tekton-tasks/tekton-hub/github-open-pr.yaml
-        - ../tekton-tasks/tekton-hub/git-cli.yaml
-        - ../tekton-tasks/kong-tekton-tasks/deck-cli/0.1/deck-cli.yaml
-        - ../tekton-tasks/kong-tekton-tasks/inso-cli/0.1/inso-cli.yaml
-        
-    
-    - name: Apply Disputes Pipeline 
-      kubernetes.core.k8s: 
-        state: present
-        namespace: disputes-apispec
-        src: "../tekton-pipeline/disputes-apispec-review-pipeline.yaml"
-    
-# configure apiops-gateway Namespace
-    - name: Apply Tekton Tasks to APIOps Namespace
-      kubernetes.core.k8s: 
-        state: present 
-        namespace: apiops-gateway
-        src: "{{ item }}"
-      loop: 
-        - ../tekton-tasks/tekton-hub/git-cli.yaml
-        - ../tekton-tasks/tekton-hub/yq.yaml
-        - ../tekton-tasks/tekton-hub/github-close-issue.yaml
-        - ../tekton-tasks/kong-tekton-tasks/deck-cli/0.1/deck-cli.yaml
-        - ../tekton-tasks/kong-tekton-tasks/inso-cli/0.1/inso-cli.yaml
-
-    - name: Apply APIOPS Pipelines
-      kubernetes.core.k8s: 
-        state: present
-        namespace: apiops-gateway
-        src: "../tekton-pipeline/{{ item }}.yaml"
-      loop: 
-        - apiops-sandbox-pipeline
-        - apiops-dev-pipeline
-    
+        gitea_namespace: gitea
+      loop: "{{ apiops }}"
+            
     - name: Create PipelineRuns 
       ansible.builtin.template: 
-        src: "../tekton-pipeline/pipeline-run/{{ item }}.j2"
+        src: "tasks/tekton/templates/pipeline-run/{{ item }}.j2"
         dest: "../run/{{ item }}.yaml"
       vars: 
         github_domain: "{{ gitea_route.spec.host }}"
         protocol: http
-        konnect_runtime_group_name: default
-      loop: 
-        - disputes-pipeline-run
-        - apiops-sandbox-pipeline-run
-        - apiops-dev-pipeline-run
+      loop: "{{ pipeline_runs }}"
 
-#   # Konnect
+  # Konnect
     - name: Create Konnect Runtime Groups and Dataplanes
-      include_tasks: tasks/konnect/konnect-dp.yaml
+      include_tasks: tasks/konnect/tasks-konnect.yaml
       vars: 
         runtime_group: "{{ item.runtime_group }}"
         namespace: "{{ item.namespace }}"
@@ -203,9 +75,10 @@
       loop: "{{ konnect }}"
   
   # Disputes Microservice
-    - name: Disputes Dev - Kubernetes Deploy and SVC
-      kubernetes.core.k8s:
-        state: present
-        namespace: disputes-dev
-        src: "disputes/disputes.yaml"
+    - name: Create Konnect Runtime Groups and Dataplanes
+      include_tasks: tasks/microservice/tasks-microservice.yaml
+      vars: 
+        namespace: "{{ item.namespace }}"
+        manifest_path: "{{ item.manifest_path }}"
+      loop: "{{ microservices }}"
 
