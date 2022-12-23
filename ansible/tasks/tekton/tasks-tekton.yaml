@@ -33,6 +33,7 @@
     - tekton-hub/git-cli.yaml
     - tekton-hub/yq.yaml
     - tekton-hub/github-close-issue.yaml
+    - tekton-hub/github-open-pr.yaml
     - kong/deck-cli/0.1/deck-cli.yaml
     - kong/inso-cli/0.1/inso-cli.yaml
   loop_control: 
@@ -42,5 +43,7 @@
   kubernetes.core.k8s: 
     state: present
     namespace: "{{ namespace }}"
-    src: "files/tekton-pipelines/{{ item }}"
+    src: "files/tekton-pipelines/{{ pipeline }}"
   loop: "{{ pipelines }}"
+  loop_control:
+    loop_var: pipeline

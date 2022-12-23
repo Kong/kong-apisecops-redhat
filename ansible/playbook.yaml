@@ -38,11 +38,11 @@
 
   tasks: 
 # Operators Cert Manager and Openshift Pipelines
-    - name: Create Konnect Runtime Groups and Dataplanes
+    - name: Install Operators
       include_tasks: tasks/operator/tasks-operator.yaml
 
-# # Gitea
-    - name: Create Konnect Runtime Groups and Dataplanes
+# Gitea
+    - name: Install Gitea
       include_tasks: tasks/gitea/tasks-gitea.yaml
 
 # #APIOps 
@@ -75,7 +75,7 @@
       loop: "{{ konnect }}"
   
   # Disputes Microservice
-    - name: Create Konnect Runtime Groups and Dataplanes
+    - name: Install Disputes Microservice
       include_tasks: tasks/microservice/tasks-microservice.yaml
       vars: 
         namespace: "{{ item.namespace }}"

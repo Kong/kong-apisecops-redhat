@@ -8,31 +8,15 @@ data:
     _konnect:
       runtime_group_name: {{ runtime_group }}
     consumers:
-    - custom_id: Jane
+    - custom_id: jane
       keyauth_credentials:
       - key: konnect
+        tags:
+        - global
       tags:
       - global
-      username: Jane
+      username: jane
     plugins:
-    - config:
-        anonymous: null
-        hide_credentials: true
-        key_in_body: false
-        key_in_header: true
-        key_in_query: false
-        key_names:
-        - apikey
-        run_on_preflight: true
-      enabled: true
-      name: key-auth
-      protocols:
-      - grpc
-      - grpcs
-      - http
-      - https
-      tags:
-      - global
     - config:
         day: null
         error_code: 429
@@ -42,7 +26,7 @@ data:
         hide_client_headers: false
         hour: null
         limit_by: consumer
-        minute: 5
+        minute: 1
         month: null
         path: null
         policy: local
@@ -66,4 +50,5 @@ data:
       - https
       tags:
       - global
+
 

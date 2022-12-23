@@ -1,0 +1,452 @@
+_type: export
+__export_format: 4
+__export_date: 2022-12-23T15:47:55.005Z
+__export_source: insomnia.desktop.app:v2022.4.0
+resources:
+  - _id: req_wrk_5e4810a1d7b9456995c2136aa4c7e7e953d79f2c
+    parentId: wrk_5e4810a1d7b9456995c2136aa4c7e7e9
+    modified: 1671726995780
+    created: 1667414883899
+    url: "{{ base_url }}/dispute/{{ id }}"
+    name: /dispute/{id}
+    description: ""
+    method: GET
+    body: {}
+    parameters: []
+    headers:
+      - id: pair_1dec9c02b65545a481eba414470005c6
+        name: apikey
+        value: konnect
+        description: ""
+        disabled: false
+    authentication: {}
+    metaSortKey: -1667414883899
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: wrk_5e4810a1d7b9456995c2136aa4c7e7e9
+    parentId: null
+    modified: 1667225195848
+    created: 1667225195848
+    name: hello-world.yaml
+    description: ""
+    scope: design
+    _type: workspace
+  - _id: req_wrk_5e4810a1d7b9456995c2136aa4c7e7e94e92b306
+    parentId: wrk_5e4810a1d7b9456995c2136aa4c7e7e9
+    modified: 1671810021539
+    created: 1667414883901
+    url: "{{ base_url }}/disputes"
+    name: /disputes
+    description: ""
+    method: GET
+    body: {}
+    parameters: []
+    headers:
+      - id: pair_dd222daf6e334b01b8b185d3046f2eda
+        name: apikey
+        value: konnect
+        description: ""
+    authentication:
+      type: basic
+      useISO88591: false
+      disabled: true
+      username: jane
+      password: test
+    metaSortKey: -1667414883901
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: req_wrk_5e4810a1d7b9456995c2136aa4c7e7e9fdf8e81d
+    parentId: fld_wrk_5e4810a1d7b9456995c2136aa4c7e7e92033b7c1
+    modified: 1669148344393
+    created: 1669148344393
+    url: "{{ base_url }}/dispute/{{ id }}"
+    name: Return a dispute by id.
+    description: ""
+    method: GET
+    body: {}
+    parameters: []
+    headers:
+      - name: apikey
+        disabled: false
+        value: "{{ apikey }}"
+    authentication: {}
+    metaSortKey: -1669148344393
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: fld_wrk_5e4810a1d7b9456995c2136aa4c7e7e92033b7c1
+    parentId: wrk_5e4810a1d7b9456995c2136aa4c7e7e9
+    modified: 1669055602859
+    created: 1669055602859
+    name: disputes
+    description: ""
+    environment: {}
+    environmentPropertyOrder: null
+    metaSortKey: -1669055602859
+    _type: request_group
+  - _id: req_wrk_5e4810a1d7b9456995c2136aa4c7e7e9a0a5133d
+    parentId: fld_wrk_5e4810a1d7b9456995c2136aa4c7e7e92033b7c1
+    modified: 1669148344395
+    created: 1669148344395
+    url: "{{ base_url }}/disputes"
+    name: Return a list of disputes
+    description: ""
+    method: GET
+    body: {}
+    parameters: []
+    headers:
+      - name: apikey
+        disabled: false
+        value: "{{ apikey }}"
+    authentication: {}
+    metaSortKey: -1669148344395
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: env_58eb52f1fbaba49074615287130e03a11cc970e2
+    parentId: wrk_5e4810a1d7b9456995c2136aa4c7e7e9
+    modified: 1667225195854
+    created: 1667225195854
+    name: Base Environment
+    data:
+      base_url: "{{ scheme }}://{{ host }}{{ base_path }}"
+    dataPropertyOrder: null
+    color: null
+    isPrivate: false
+    metaSortKey: 1667225195854
+    _type: environment
+  - _id: jar_58eb52f1fbaba49074615287130e03a11cc970e2
+    parentId: wrk_5e4810a1d7b9456995c2136aa4c7e7e9
+    modified: 1667225195856
+    created: 1667225195856
+    name: Default Jar
+    cookies: []
+    _type: cookie_jar
+  - _id: spc_cfd3cb71496d467299baefae57008bfe
+    parentId: wrk_5e4810a1d7b9456995c2136aa4c7e7e9
+    modified: 1671809424218
+    created: 1667225195850
+    fileName: disputes.yaml
+    contents: "openapi: 3.0.0
+
+      info:
+
+      \  version: v1
+
+      \  title: 'Disputes'
+
+      \  description: \"Acme Bank - Disputes API\"
+
+      servers:
+
+      \  - url: http://sandbox:8080
+
+      \    description: Sandbox Server
+
+
+      tags:\ 
+
+      \  - name: disputes
+
+      \    description: \"disputes apis for acme bank\"
+
+
+      x-kong-name: disputes
+
+
+      paths:
+
+      \  /disputes:
+
+      \    x-kong-route-defaults:
+
+      \      strip_path: false
+
+      \      protocols: [http]
+
+      \    get:
+
+      \      operationId: \"getListDispute\"
+
+      \      summary: Return a list of disputes
+
+      \      tags:\ 
+
+      \        - disputes
+
+      \      security:
+
+      \        - keyAuth: []
+
+      \      responses:\ 
+
+      \       '200':\ 
+
+      \         description: successful response - return a list of
+      disputes
+
+      \         content:\ 
+
+      \           application/json:\ 
+
+      \             schema:\ 
+
+      \               type: array
+
+      \               items:\ 
+
+      \                 $ref: '#/components/schemas/Dispute'    \ 
+
+      \             example:\ 
+
+      \               - cardId: \"dtp12345\"
+
+      \                 chargeId: \"abc15785\"
+
+      \                 id: 0
+
+      \                 status: \"in-progress\"
+
+      \               - cardId: \"dtp12345\"
+
+      \                 chargeId: \"eftlnask\"
+
+      \                 id: 1
+
+      \                 status: \"closed\"
+
+      \              \ 
+
+      \       '400':\ 
+
+      \          description: Bad request.
+
+      \       '401':
+
+      \          description: Unauthorized.
+
+      \       '5XX':\ 
+
+      \          description: Unexpected Error.\ 
+
+      \  /dispute/{id}:
+
+      \    x-kong-route-defaults:
+
+      \      strip_path: false
+
+      \      protocols: [http]
+
+      \    get:
+
+      \      operationId: \"getDispute\"
+
+      \      parameters:
+
+      \         - in: path
+
+      \           name: id
+
+      \           schema:
+
+      \             type: string
+
+      \           required: true
+
+      \      summary: Return a dispute by id.
+
+      \      tags:\ 
+
+      \        - disputes
+
+      \      security:
+
+      \        - keyAuth: []     \ 
+
+      \      responses:\ 
+
+      \       '200':\ 
+
+      \         description: successful response - return dispute
+
+      \         content:\ 
+
+      \           application/json:
+
+      \             schema:\ 
+
+      \               $ref: '#/components/schemas/Dispute'
+
+      \             example:\ 
+
+      \               cardId: \"dtp12345\"
+
+      \               chargeId: \"abc15785\"
+
+      \               id: 0
+
+      \               status: \"in-progress\"
+
+      \       '400':\ 
+
+      \         description: Bad request.
+
+      \       '401':
+
+      \         description: Unauthorized.
+
+      \       '5XX':\ 
+
+      \         description: Unexpected Error.
+
+      components:
+
+      \  securitySchemes:
+
+      \    keyAuth:
+
+      \      type: apiKey
+
+      \      name: apikey
+
+      \      in: header
+
+      \  schemas:\ 
+
+      \    Dispute:
+
+      \      type: object\ 
+
+      \      properties:
+
+      \        cardId:\ 
+
+      \          type: string
+
+      \          example: \"dtp12345\"
+
+      \        chargeId:\ 
+
+      \          type: string
+
+      \          example: \"abc15785\"
+
+      \        reason:\ 
+
+      \          type: string
+
+      \          example: \"duplicate charge\"
+
+      \        id:\ 
+
+      \          type: integer
+
+      \          example: 1
+
+      \        status:\ 
+
+      \          type: string
+
+      \          example: \"in-progress\"
+
+      \  "
+    contentType: yaml
+    _type: api_spec
+  - _id: uts_16404b9d966943ad9e65fd7bc4224b4d
+    parentId: wrk_5e4810a1d7b9456995c2136aa4c7e7e9
+    modified: 1667248467926
+    created: 1667225298641
+    name: Functional Unit Tests
+    _type: unit_test_suite
+  - _id: env_env_58eb52f1fbaba49074615287130e03a11cc970e2_sub
+    parentId: env_58eb52f1fbaba49074615287130e03a11cc970e2
+    modified: 1671810444068
+    created: 1667225261581
+    name: UnitTest
+    data:
+      scheme: http
+      base_path: ""
+      host: localhost:4010
+      id: 1
+    dataPropertyOrder:
+      "&":
+        - scheme
+        - base_path
+        - host
+        - id
+    color: null
+    isPrivate: false
+    metaSortKey: 1667225261581
+    _type: environment
+  - _id: env_746269463a3148268798ca9053e9f362
+    parentId: env_58eb52f1fbaba49074615287130e03a11cc970e2
+    modified: 1671809449712
+    created: 1669055615131
+    name: Kong-Sandbox
+    data:
+      scheme: http
+      base_path: ""
+      host: a0837bfcc28e24304a6c717318b5014f-1778135002.us-west-2.elb.amazonaws.com
+      id: 1
+    dataPropertyOrder:
+      "&":
+        - scheme
+        - base_path
+        - host
+        - id
+    color: null
+    isPrivate: false
+    metaSortKey: 1667592662192.5
+    _type: environment
+  - _id: env_28c058e4381b4f24a28afc491823f733
+    parentId: env_58eb52f1fbaba49074615287130e03a11cc970e2
+    modified: 1671810012957
+    created: 1669128977224
+    name: Kong-Dev
+    data:
+      scheme: http
+      base_path: ""
+      host: af3e4344de5354fbbb91dc5bfdbd7560-153153413.us-west-2.elb.amazonaws.com
+      id: 0
+    dataPropertyOrder:
+      "&":
+        - scheme
+        - base_path
+        - host
+        - id
+    color: null
+    isPrivate: false
+    metaSortKey: 1667776362498.25
+    _type: environment
+  - _id: ut_46f36341d8d1469888a292ef53df9172
+    parentId: uts_16404b9d966943ad9e65fd7bc4224b4d
+    modified: 1667849709261
+    created: 1667225453842
+    requestId: req_wrk_5e4810a1d7b9456995c2136aa4c7e7e94e92b306
+    name: Returns 200
+    code: |-
+      const response1 = await insomnia.send();
+      expect(response1.status).to.equal(200);
+    _type: unit_test

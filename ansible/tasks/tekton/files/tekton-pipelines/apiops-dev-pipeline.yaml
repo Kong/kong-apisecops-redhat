@@ -14,6 +14,8 @@ spec:
       description: branch to pull down
     - name: microservice
       description: name of the microservice to update and manage
+    - name: api-spec-version
+      description: name of the apispec version being deployed
     - name: konnect-runtime-group-name 
       description: the konnect runtime group where the apispec will be synced to
   workspaces:
@@ -65,6 +67,66 @@ spec:
             #!/usr/bin/env sh
             ls -al
             deck sync --state apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml --konnect-runtime-group-name $(params.konnect-runtime-group-name)
+    - name: create-branch
+      runAfter:
+        - deck-sync
+      workspaces: 
+        - name: source
+          workspace: source
+      params:
+        - name: API-SPEC-VERSION
+          value: $(params.api-spec-version)
+      taskSpec: 
+        workspaces: 
+          - name: source
+        params: 
+          - name: API-SPEC-VERSION
+        stepTemplate:
+          env:
+          - name: "HOME"
+            value: "/tekton/home"
+        steps:
+        - image: alpine/git:v2.26.2
+          workingDir: $(workspaces.source.path)        
+          script: | 
+            #!/usr/bin/env sh 
+            cd apiops-gateway
+            git config --global user.email "admin@gitea.com"
+            git config --global user.name "gitea"
+            git checkout -b disputes-$(params.API-SPEC-VERSION)-dev
+
+            echo check git status =========
+            git status
+            git add . 
+            
+            git commit -m "disputes new apispec $(params.API-SPEC-VERSION) for dev"
+            git push -u origin disputes-$(params.API-SPEC-VERSION)-dev
+    - name: open-pr-to-dev
+      taskRef:
+        name: github-open-pr
+      runAfter: 
+        - create-branch
+      params:
+        - name: GITHUB_HOST_URL
+          value: $(params.github-host-url) 
+        - name: API_PATH_PREFIX
+          value: /api/v1
+        - name: REPO_FULL_NAME
+          value: $(params.git-full-repo-name)
+        - name: HEAD
+          value: "$(params.microservice)-$(params.api-spec-version)-dev"
+        - name: BASE
+          value: dev
+        - name: TITLE
+          value: "$(params.microservice) API Version $(params.api-spec-version)"
+        - name: BODY 
+          value: "$(params.microservice) API Spec update $(params.api-spec-version)"
+        - name: GITHUB_TOKEN_SECRET_KEY
+          value: token
+        - name: GITHUB_TOKEN_SECRET_NAME
+          value: github-token
+        - name: AUTH_TYPE
+          value: Bearer
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

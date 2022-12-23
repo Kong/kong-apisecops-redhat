@@ -5,7 +5,7 @@
   connection: local
   tasks: 
 
-    - name: "Helm Uninstall {{ item }} Dataplane"
+    - name: "Helm Uninstall Dataplane"
       kubernetes.core.helm:
         name: konnect-dp
         chart_ref: kong/kong

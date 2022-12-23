@@ -16,8 +16,13 @@ spec:
       value: sandbox
     - name: microservice
       value: disputes
+    - name: api-spec-version
+      value: v1.1.0
     - name: konnect-runtime-group-name
       value: dev
+  taskRunSpecs:
+    - pipelineTaskName: create-branch
+      taskServiceAccountName: build-bot
   workspaces:
     - name: source
       persistentvolumeclaim:
