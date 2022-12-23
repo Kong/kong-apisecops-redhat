@@ -1,0 +1,60 @@
+_format_version: "3.0"
+services:
+  - host: sandbox
+    name: disputes
+    path: /
+    port: 8080
+    protocol: http
+    routes:
+      - methods:
+          - GET
+        name: disputes-getListDispute
+        paths:
+          - ~/disputes$
+        plugins:
+          - config:
+              key_names:
+                - apikey
+            name: key-auth
+            tags:
+              - OAS3_import
+              - OAS3file_apispec_disputes.yml
+              - disputes
+        protocols:
+          - http
+        strip_path: false
+        tags:
+          - OAS3_import
+          - OAS3file_apispec_disputes.yml
+          - disputes
+      - methods:
+          - GET
+        name: disputes-getDispute
+        paths:
+          - ~/dispute/(?<id>[^\/]+)$
+        plugins:
+          - config:
+              key_names:
+                - apikey
+            name: key-auth
+            tags:
+              - OAS3_import
+              - OAS3file_apispec_disputes.yml
+              - disputes
+        protocols:
+          - http
+        strip_path: false
+        tags:
+          - OAS3_import
+          - OAS3file_apispec_disputes.yml
+          - disputes
+    tags:
+      - OAS3_import
+      - OAS3file_apispec_disputes.yml
+      - disputes
+      - _KonnectService: disputes
+    plugins:
+      - config:
+          api_specification: "openapi: 3.0.0\ninfo:\n  version: v1\n  title: 'Disputes'\n  description: \"Acme Bank - Disputes API\"\nservers:\n  - url: http://sandbox:8080\n    description: Sandbox Server\n\ntags: \n  - name: disputes\n    description: \"disputes apis for acme bank\"\n\nx-kong-name: disputes\n\npaths:\n  /disputes:\n    x-kong-route-defaults:\n      strip_path: false\n      protocols: [http]\n    get:\n      operationId: \"getListDispute\"\n      summary: Return a list of disputes\n      tags: \n        - disputes\n      security:\n        - keyAuth: []\n      responses: \n       '200': \n         description: successful response - return a list of disputes\n         content: \n           application/json: \n             schema: \n               type: array\n               items: \n                 $ref: '#/components/schemas/Dispute'     \n             example: \n               - cardId: \"dtp12345\"\n                 chargeId: \"abc15785\"\n                 id: 0\n                 status: \"in-progress\"\n               - cardId: \"dtp12345\"\n                 chargeId: \"eftlnask\"\n                 id: 1\n                 status: \"closed\"\n               \n       '400': \n          description: Bad request.\n       '401':\n          description: Unauthorized.\n       '5XX': \n          description: Unexpected Error. \n  /dispute/{id}:\n    x-kong-route-defaults:\n      strip_path: false\n      protocols: [http]\n    get:\n      operationId: \"getDispute\"\n      parameters:\n         - in: path\n           name: id\n           schema:\n             type: string\n           required: true\n      summary: Return a dispute by id.\n      tags: \n        - disputes\n      security:\n        - keyAuth: []      \n      responses: \n       '200': \n         description: successful response - return dispute\n         content: \n           application/json:\n             schema: \n               $ref: '#/components/schemas/Dispute'\n             example: \n               cardId: \"dtp12345\"\n               chargeId: \"abc15785\"\n               id: 0\n               status: \"in-progress\"\n       '400': \n         description: Bad request.\n       '401':\n         description: Unauthorized.\n       '5XX': \n         description: Unexpected Error.\ncomponents:\n  securitySchemes:\n    keyAuth:\n      type: apiKey\n      name: apikey\n      in: header\n  schemas: \n    Dispute:\n      type: object \n      properties:\n        cardId: \n          type: string\n          example: \"dtp12345\"\n        chargeId: \n          type: string\n          example: \"abc15785\"\n        reason: \n          type: string\n          example: \"duplicate charge\"\n        id: \n          type: integer\n          example: 1\n        status: \n          type: string\n          example: \"in-progress\"\n  "
+        enabled: true
+        name: mocking

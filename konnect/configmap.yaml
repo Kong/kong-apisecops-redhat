@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: deck-{{runtime_group}}-rg
+  name: deck-dev-rg
 data:
   deck.yaml: |
     _format_version: "3.0"
     _konnect:
-      runtime_group_name: {{runtime_group}}
+      runtime_group_name: dev
     consumers:
     - custom_id: jane
       keyauth_credentials:

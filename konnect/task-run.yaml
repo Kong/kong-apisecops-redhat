@@ -1,0 +1,20 @@
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  generateName: init-konnect-runtimegroups-dev-
+  namespace: apiops-gateway
+spec:
+  taskRef:
+    name: deck-cli
+  workspaces: 
+    - name: source 
+      configMap:
+        name: deck-dev-rg
+    - name: deck
+      secret:
+        secretName: deck
+  params: 
+    - name: SCRIPT
+      value: |
+        #!/usr/bin/env sh
+        deck sync --select-tag global --state deck.yaml --konnect-runtime-group-name dev

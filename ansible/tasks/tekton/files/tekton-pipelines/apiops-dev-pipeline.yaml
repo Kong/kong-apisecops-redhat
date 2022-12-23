@@ -38,7 +38,7 @@ spec:
           value: "true"
         - name: subdirectory
           value: apiops-gateway
-    - name: deck-dev-create
+    - name: deck-dev
       taskRef: 
         name: yq
       runAfter: 
@@ -51,11 +51,12 @@ spec:
           value: |
             /usr/bin/yq -i 'with(.services[]; .host = "$(params.microservice).$(params.microservice)-dev.svc.cluster.local" )' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
             /usr/bin/yq -i 'del(.services.[] | select(.name == "$(params.microservice)").plugins)' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
+            /usr/bin/yq -i '.services[].tags += {"_KonnectService":"$(params.microservice)"}' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
     - name: deck-sync
       taskRef:
         name: deck-cli
       runAfter:
-        - deck-dev-create
+        - deck-dev
       workspaces: 
         - name: source
           workspace: source
