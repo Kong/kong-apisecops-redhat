@@ -80,5 +80,8 @@
       vars: 
         namespace: "{{ item.namespace }}"
         manifest_path: "{{ item.manifest_path }}"
-      loop: "{{ microservices }}"
+      loop: "{{ microservices }}" 
+  
+  # Output Data
+    - name: 
 

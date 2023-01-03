@@ -112,11 +112,23 @@ spec:
         - name: SCRIPT
           value: | 
             mock=$(cat apiops-gateway/api/$(params.api-spec-src)/$(params.api-spec-file)) /usr/bin/yq -i 'with(.services[]; .name = "disputes" | .plugins = [{"config": {"api_specification": strenv(mock)}, "enabled": true, "name": "mocking"}])' apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml
+    - name: deck-sandbox-prep
+      taskRef: 
+        name: yq
+      runAfter: 
+        - mocking-plugin
+      workspaces: 
+        - name: source 
+          workspace: source 
+      params: 
+        - name: SCRIPT
+          value: | 
+            /usr/bin/yq -i '. + {"_info": {"defaults": {}, "select_tags": ["$(params.api-spec-src)"]}} + {"_konnect": {"runtime_group_name": "$(params.konnect-runtime-group-name)"}} | sort_keys(.)' apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml
     - name: deck-sync
       taskRef: 
         name: deck-cli
       runAfter: 
-        - mocking-plugin
+        - deck-sandbox-prep
       workspaces: 
         - name: source 
           workspace: source 
@@ -127,7 +139,7 @@ spec:
           value: | 
             #!/usr/bin/env sh
             ls -al
-            deck sync --state apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml --konnect-runtime-group-name $(params.konnect-runtime-group-name)
+            deck sync --state apiops-gateway/api/$(params.api-spec-src)/deck/kong3_$(params.api-spec-src).yml
     - name: update-pr
       runAfter:
         - deck-sync

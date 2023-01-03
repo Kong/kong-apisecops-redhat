@@ -52,6 +52,7 @@ spec:
             /usr/bin/yq -i 'with(.services[]; .host = "$(params.microservice).$(params.microservice)-dev.svc.cluster.local" )' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
             /usr/bin/yq -i 'del(.services.[] | select(.name == "$(params.microservice)").plugins)' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
             /usr/bin/yq -i '.services[].tags += ["_KonnectService:$(params.microservice)"]' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
+            /usr/bin/yq -i '._konnect.runtime_group_name = "$(params.konnect-runtime-group-name)"' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
     - name: deck-sync
       taskRef:
         name: deck-cli
@@ -67,10 +68,10 @@ spec:
           value: | 
             #!/usr/bin/env sh
             ls -al
-            deck sync --state apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml --konnect-runtime-group-name $(params.konnect-runtime-group-name)
+            deck sync --state apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
     - name: create-branch
       runAfter:
-        - deck-dev-prep
+        - deck-sync
       workspaces: 
         - name: source
           workspace: source
