@@ -28,6 +28,7 @@
 - name: Deploy Gitea 
   kubernetes.core.k8s:
     state: present
+    apply: yes
     namespace: gitea
     src: "files/gitea.yaml"
 
@@ -53,3 +54,12 @@
       type: Succeeded
       status: True
       reason: Succeeded
+
+# Gather Gitea facts
+- name: Create Gitea Url Fact
+  ansible.builtin.set_fact:
+    gitea_url: "http://{{ gitea_route.spec.host }}"
+
+- name: Append gitea_url fact to demo_facts dictionary
+  ansible.builtin.set_fact:
+    demo_facts: "{{ demo_facts | combine({ 'gitea': {'url': gitea_url, 'username': 'gitea', 'password': 'openshift' }}) }}"

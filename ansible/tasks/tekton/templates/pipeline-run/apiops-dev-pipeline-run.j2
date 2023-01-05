@@ -20,6 +20,8 @@ spec:
       value: v1.1.0
     - name: konnect-runtime-group-name
       value: dev
+    - name: konnect-proxy-url
+      value:  {{ konnect_dev_proxy_url }}
   taskRunSpecs:
     - pipelineTaskName: create-branch
       taskServiceAccountName: build-bot

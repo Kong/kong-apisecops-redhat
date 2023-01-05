@@ -9,7 +9,6 @@ spec:
       description: the github/gitea host domain
     - name: git-full-repo-name
       description: the full git repo name (gitea/acmebank-apiops-gateway)
-      default: gitea/acmebank-apiops-gateway
     - name: git-branch
       description: branch to pull down
     - name: microservice
@@ -18,6 +17,8 @@ spec:
       description: name of the apispec version being deployed
     - name: konnect-runtime-group-name 
       description: the konnect runtime group where the apispec will be synced to
+    - name: konnect-proxy-url
+      description: Konnect Proxy/Dataplane Url "http://aws.someloadbalancer.com"
   workspaces:
     - name: source
     - name: deck
@@ -53,6 +54,23 @@ spec:
             /usr/bin/yq -i 'del(.services.[] | select(.name == "$(params.microservice)").plugins)' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
             /usr/bin/yq -i '.services[].tags += ["_KonnectService:$(params.microservice)"]' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
             /usr/bin/yq -i '._konnect.runtime_group_name = "$(params.konnect-runtime-group-name)"' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
+            /usr/bin/yq -i '.services.[].routes.[].methods += ["OPTIONS"]' apiops-gateway/api/$(params.microservice)/deck/kong3_$(params.microservice).yml
+    - name: devportal-spec-prep
+      taskRef: 
+        name: yq
+      runAfter: 
+        - fetch-repository
+      workspaces: 
+        - name: source
+          workspace: source
+      params: 
+        - name: SCRIPT 
+          value: | 
+            cp apiops-gateway/api/$(params.microservice)/apispec_$(params.microservice).yml apiops-gateway/api/$(params.microservice)/devportal/apispec.yml
+
+            /usr/bin/yq -i '.servers = [{"url": "$(params.konnect-proxy-url)", "description": "Dev"}]' apiops-gateway/api/$(params.microservice)/devportal/apispec.yml
+            /usr/bin/yq -i 'del(.x-kong-name) | del(.paths.*.x-kong-route-defaults)' apiops-gateway/api/$(params.microservice)/devportal/apispec.yml
+
     - name: deck-sync
       taskRef:
         name: deck-cli
@@ -72,6 +90,7 @@ spec:
     - name: create-branch
       runAfter:
         - deck-sync
+        - devportal-spec-prep
       workspaces: 
         - name: source
           workspace: source
@@ -97,11 +116,13 @@ spec:
             git config --global user.name "gitea"
             git checkout -b disputes-$(params.API-SPEC-VERSION)-dev
 
-            echo check git status =========
+            echo ======= git add new content =========
             git status
             git add . 
             
             git commit -m "disputes new apispec $(params.API-SPEC-VERSION) for dev"
+
+            echo ===== git push ===== 
             git push -u origin disputes-$(params.API-SPEC-VERSION)-dev
     - name: open-pr-to-dev
       taskRef:

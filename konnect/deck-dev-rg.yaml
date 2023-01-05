@@ -1,16 +1,40 @@
 _format_version: "3.0"
+_info:
+  defaults: {}
+  select_tags:
+  - global
 _konnect:
   runtime_group_name: dev
 consumers:
 - custom_id: jane
   keyauth_credentials:
   - key: konnect
-    tags:
-    - global
-  tags:
-  - global
   username: jane
 plugins:
+- config:
+    credentials: false
+    exposed_headers: null
+    headers: null
+    max_age: null
+    methods:
+    - GET
+    - HEAD
+    - PUT
+    - PATCH
+    - POST
+    - DELETE
+    - OPTIONS
+    - TRACE
+    - CONNECT
+    origins: null
+    preflight_continue: false
+  enabled: true
+  name: cors
+  protocols:
+  - grpc
+  - grpcs
+  - http
+  - https
 - config:
     day: null
     error_code: 429
@@ -42,5 +66,3 @@ plugins:
   - grpcs
   - http
   - https
-  tags:
-  - global

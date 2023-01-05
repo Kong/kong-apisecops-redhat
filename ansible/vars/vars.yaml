@@ -1,0 +1,36 @@
+# map of any facts that needs to be printed for the user.
+demo_facts: {}
+
+# list of konnect dataplanes and respective runtime groups that will be created 
+konnect: 
+  - runtime_group: default
+    namespace: kong-sandbox
+    dataplane_name: konnect-dp
+    crt_secret: konnect-sandbox-crt
+    pipeline_namespace: apiops-gateway #tbd delete
+  - runtime_group: dev
+    namespace: kong-dev
+    dataplane_name: konnect-dp
+    crt_secret: konnect-dev-crt
+    pipeline_namespace: apiops-gateway #tbd delete 
+
+# list of apiops namespaces and respective tekton pipelines needed in each namespace
+apiops: 
+  - namespace: disputes-apispec
+    pipelines: 
+      - disputes-apispec-review-pipeline.yaml
+  - namespace: apiops-gateway
+    pipelines: 
+      - apiops-sandbox-pipeline.yaml
+      - apiops-dev-pipeline.yaml
+
+# list of pipelines runs that need to be created and placed into sub-dir run
+pipeline_runs:
+  - disputes-pipeline-run
+  - apiops-sandbox-pipeline-run
+  - apiops-dev-pipeline-run
+
+# list of kuberentes microservices that need to be deployed, name of namespace to be created, and path to kuberentes manifest
+microservices: 
+  - namespace: disputes-dev
+    manifest_path: "{{ playbook_dir }}/disputes/disputes.yaml"

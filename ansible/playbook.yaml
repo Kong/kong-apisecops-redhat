@@ -3,38 +3,8 @@
 - name: 'Install Kong APISecOps Demo'
   hosts: localhost
   connection: local
-  vars: 
-    # list of konnect dataplanes and respective runtime groups that will be created 
-    konnect: 
-      - runtime_group: default
-        namespace: kong-sandbox
-        crt_secret: konnect-sandbox-crt
-        pipeline_namespace: apiops-gateway
-      - runtime_group: dev
-        namespace: kong-dev
-        crt_secret: konnect-dev-crt
-        pipeline_namespace: apiops-gateway
-
-    # list of apiops namespaces and respective tekton pipelines needed in each namespace
-    apiops: 
-      - namespace: disputes-apispec
-        pipelines: 
-          - disputes-apispec-review-pipeline.yaml
-      - namespace: apiops-gateway
-        pipelines: 
-          - apiops-sandbox-pipeline.yaml
-          - apiops-dev-pipeline.yaml
-
-    # list of pipelines runs that need to be created and placed into sub-dir run
-    pipeline_runs:
-      - disputes-pipeline-run
-      - apiops-sandbox-pipeline-run
-      - apiops-dev-pipeline-run
-    
-    # list of kuberentes microservices that need to be deployed, name of namespace to be created, and path to kuberentes manifest
-    microservices: 
-      - namespace: disputes-dev
-        manifest_path: "{{ playbook_dir}}/disputes/disputes.yaml"
+  vars_files: 
+    - "{{ playbook_dir }}/vars/vars.yaml"
 
   tasks: 
 # Operators Cert Manager and Openshift Pipelines
@@ -45,7 +15,7 @@
     - name: Install Gitea
       include_tasks: tasks/gitea/tasks-gitea.yaml
 
-# #APIOps 
+# APIOps Namespace
     - name: Create and Configure APIOps Namespace
       include_tasks: tasks/tekton/tasks-tekton.yaml
       vars: 
@@ -54,7 +24,19 @@
         gitea_domain: "{{ gitea_route.spec.host }}"
         gitea_namespace: gitea
       loop: "{{ apiops }}"
-            
+      
+# Konnect
+    - name: Create Konnect Runtime Groups and Dataplanes
+      include_tasks: tasks/konnect/tasks-konnect.yaml
+      vars: 
+        runtime_group: "{{ item.runtime_group }}"
+        namespace: "{{ item.namespace }}"
+        dataplane_name: "{{ item.dataplane_name }}"
+        crt_secret: "{{ item.crt_secret }}"
+        pipeline_namespace: "{{ item.pipeline_namespace }}"  
+      loop: "{{ konnect }}"
+
+# PipelineRuns
     - name: Create PipelineRuns 
       ansible.builtin.template: 
         src: "tasks/tekton/templates/pipeline-run/{{ item }}.j2"
@@ -62,19 +44,10 @@
       vars: 
         github_domain: "{{ gitea_route.spec.host }}"
         protocol: http
+        konnect_dev_proxy_url: "{{ demo_facts['kong-dev']['schema'] }}://{{ demo_facts['kong-dev']['host'] }}"
       loop: "{{ pipeline_runs }}"
 
-  # Konnect
-    - name: Create Konnect Runtime Groups and Dataplanes
-      include_tasks: tasks/konnect/tasks-konnect.yaml
-      vars: 
-        runtime_group: "{{ item.runtime_group }}"
-        namespace: "{{ item.namespace }}"
-        crt_secret: "{{ item.crt_secret }}"
-        pipeline_namespace: "{{ item.pipeline_namespace }}"
-      loop: "{{ konnect }}"
-  
-  # Disputes Microservice
+# Disputes Microservice
     - name: Install Disputes Microservice
       include_tasks: tasks/microservice/tasks-microservice.yaml
       vars: 
@@ -82,6 +55,21 @@
         manifest_path: "{{ item.manifest_path }}"
       loop: "{{ microservices }}" 
   
-  # Output Data
-    - name: 
-
+# Output Data and End
+    - name: Print Demo Facts
+      debug: 
+        var: demo_facts
+    
+    - name: Print Demo Facts to Local file
+      ansible.builtin.copy: 
+        dest: "{{playbook_dir}}/Demo_Facts.json"
+        content: "{{ demo_facts | to_nice_json }}"
+    
+    - name: Last Note
+      debug: 
+        msg: [
+            "The APISecOps Demo Env Setup is now complete on the rosa cluster.",
+            "Have fun learning APISecOps in Kong Konnect land.",
+            "Best Regards - ",
+            "Your Friendly Neighborhood Kong Partner Engineering Team."
+          ]

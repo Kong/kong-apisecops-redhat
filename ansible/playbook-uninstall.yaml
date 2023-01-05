@@ -3,15 +3,33 @@
 - name: 'Uninstall Kong APISecOps Demo'
   hosts: localhost
   connection: local
-  tasks: 
+  vars_files: 
+    - "{{ playbook_dir }}/vars/vars.yaml"
 
-    - name: "Helm Uninstall Dataplane"
+  tasks:
+    - name: "Helm Uninstall Dataplanes"
       kubernetes.core.helm:
-        name: konnect-dp
-        chart_ref: kong/kong
-        release_namespace: "{{ item }}"
         state: absent
+        name: "{{ item.dataplane_name }}"
+        chart_ref: kong/kong
+        release_namespace: "{{ item.namespace }}"
         wait: true 
-      loop:
-        - kong-sandbox
-        - kong-dev      
+      loop: "{{ konnect }}"
+    
+    - name: Delete Demo_Facts file
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/Demo_Facts.json"
+        state: absent
+    
+    - name: Goodbye
+      debug: 
+        msg: [
+            "The Konnect Dataplanes have been delete from the rosa cluster.", 
+            "It is safe to clean up any unwanted Konnect Control Plane configuration, and delete the rosa cluster.", 
+            "We hope you enjoyed the APISecOps with Kong Tour!",
+            "Best Regards - ",
+            "Your Friendly Neighborhood Kong Partner Engineering Team."
+          ]
+
+      
+        

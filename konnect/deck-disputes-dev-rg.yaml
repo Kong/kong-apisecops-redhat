@@ -19,6 +19,7 @@ services:
       - https_redirect_status_code: 426
         methods:
           - GET
+          - OPTIONS
         name: disputes-getDispute
         path_handling: v0
         paths:
@@ -56,6 +57,7 @@ services:
       - https_redirect_status_code: 426
         methods:
           - GET
+          - OPTIONS
         name: disputes-getListDispute
         path_handling: v0
         paths:
@@ -95,3 +97,4 @@ services:
       - OAS3file_apispec_disputes.yml
       - _KonnectService:disputes
     write_timeout: 60000
+servies: []

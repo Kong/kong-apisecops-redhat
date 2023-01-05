@@ -75,20 +75,30 @@ spec:
           else:
             print("Created git repo AcmeBank APIOps Gateway")
           
-          # create a personal access token
-          token_url = giteaURL + "/api/v1/users/" + gitea_user + "/tokens"
-          print ("url is: " + token_url)
+          ##### create a personal access token ######
           
-          headers = {'Content-Type':'application/json','accept':'application/json'}
-          
-          data_token = '{"name": "token_3"}'
+          # check if secret exists already in gitea namespace
+          proc = subprocess.Popen("oc get secret github-token --template={{.metadata.name}}", shell=True, stdout=subprocess.PIPE)
+          stdout, stderr = proc.communicate()
 
-          token_resp = requests.post(url = token_url, headers = headers, auth=(gitea_user, gitea_pwd), data = data_token)
-             
-          if token_resp != 200 and token_resp.status_code !=201: 
-            print("Error creating token")
-            print(token_resp.content)
+          if proc.returncode == 1 and stdout != 'github-token': 
+            # create the token
+            token_url = giteaURL + "/api/v1/users/" + gitea_user + "/tokens"
+            print ("url is: " + token_url) 
+            headers = {'Content-Type':'application/json','accept':'application/json'}
+
+            data_token = '{"name": "admin_token"}'
+
+            token_resp = requests.post(url = token_url, headers = headers, auth=(gitea_user, gitea_pwd), data = data_token)
+              
+            if token_resp.status_code != 200 and token_resp.status_code !=201: 
+              print("Error creating token")
+              print(token_resp.content)
+            else: 
+              token = token_resp.json().get("sha1")
+              print("token is: " + token + "\t" + "secret is github-token")
+              os.popen('oc create secret generic github-token --from-literal token={0}'.format(token)).read()
           else: 
-            token = token_resp.json().get("sha1")
-            print("token is: " + token)
-            os.popen('oc create secret generic github-token --from-literal token={0}'.format(token)).read()
+            # token already exists
+            print("personal access token not created because 'github-token' secret found in the gitea namespace")
+        

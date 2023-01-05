@@ -33,3 +33,23 @@
 
 - name: "Deck Configure Konnect Runtime Group - {{ runtime_group }}"
   include_tasks: konnect-runtime-group-configure.yaml
+
+- name: "Get Konnect - Kuberentes SVC/Loadbalancers"
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Service
+    namespace: "{{ namespace }}"
+    name: "{{ dataplane_name }}-kong-proxy"
+  register: dp_svc
+
+- name: Create kong_proxy fact
+  ansible.builtin.set_fact:
+    kong_proxy: "{{ dp_svc.resources[0].status.loadBalancer.ingress[0].hostname }}"
+
+- name: Append kong_proxy fact to demo_fact dictionary
+  ansible.builtin.set_fact:
+    demo_facts: "{{ demo_facts | combine({namespace: kong_proxy}) }}"
+
+- name: Append Insomnia Konnect Factos to demo_fact dictionary
+  ansible.builtin.set_fact:
+    demo_facts: "{{ demo_facts | combine({ namespace: {'scheme': 'http', 'base_path': '', 'host': kong_proxy,'apikey': 'konnect', 'id': '0'}}) }}"

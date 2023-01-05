@@ -19,18 +19,21 @@
       status: Unknown
       type: Normal    
 
-- name: Wait for Cert Manager Pods to be Ready
+- name: Wait for Cert Manager Pod to be Ready
   kubernetes.core.k8s_info:
     kind: Pod
+    api_version: v1
     label_selectors: 
-      - app = cert-manager
+      - app = "{{ item.label }}"
     namespace: openshift-operators
-    wait: yes
-    wait_sleep: 10 
-    wait_timeout: 360
-    wait_condition:
+    wait: yes 
+    wait_condition: 
       type: Ready
-      status: "True"
+      status: True
+  loop: 
+    - { label: 'cert-manager' }
+    - { label: 'webhook' }
+    - { label: 'cainjector' }
 
 # cert manager configuration
 - name: Cert Manager Configuration

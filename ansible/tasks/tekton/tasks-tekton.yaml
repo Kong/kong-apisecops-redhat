@@ -7,6 +7,13 @@
     name: "{{ namespace }}"
     state: present
 
+- name: "If Exists - delete github-token secret in namespace {{ namespace }}"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Secret
+    name: github-token
+    state: absent
+
 - name: "Fetch the github-token secret to Namespace {{ namespace }}"
   shell: |
     kubectl get secret github-token --namespace {{ gitea_namespace }} -o yaml | sed 's/namespace: .*/namespace: {{ namespace }}/' | kubectl apply -f -
@@ -14,8 +21,8 @@
   failed_when: 
     - ret.rc == 1 
     - "'error when patching' not in ret.stderr"
-
-- name: "Deploy Tekton Pipeline Secrets - github-basic-auth - deck - to Namespace {{ namespace }}"
+          
+- name: "Deploy Tekton Pipeline Secrets - github-basic-auth, deck - to Namespace {{ namespace }}"
   kubernetes.core.k8s:
     state: present 
     namespace: "{{ namespace }}"
