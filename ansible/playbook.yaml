@@ -24,7 +24,7 @@
         gitea_domain: "{{ gitea_route.spec.host }}"
         gitea_namespace: gitea
       loop: "{{ apiops }}"
-      
+
 # Konnect
     - name: Create Konnect Runtime Groups and Dataplanes
       include_tasks: tasks/konnect/tasks-konnect.yaml
@@ -56,13 +56,21 @@
       loop: "{{ microservices }}" 
   
 # Output Data and End
+    - name: Get Openshift Console URL
+      ansible.builtin.set_fact: 
+        ocp_console_url: "{{ lookup('kubernetes.core.k8s', kind='Route', namespace='openshift-console', resource_name='openshift-console') }}"
+    
+    - name: Append to Openshift Console URL to demo facts
+      ansible.builtin.set_fact: 
+        demo_facts: "{{ demo_facts | combine({ 'ocp_url': ocp_console_url }) }}"
+
     - name: Print Demo Facts
       debug: 
         var: demo_facts
     
     - name: Print Demo Facts to Local file
       ansible.builtin.copy: 
-        dest: "{{playbook_dir}}/Demo_Facts.json"
+        dest: "{{playbook_dir}}/demo_facts.json"
         content: "{{ demo_facts | to_nice_json }}"
     
     - name: Last Note
