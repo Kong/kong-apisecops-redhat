@@ -1,22 +1,50 @@
-# APISecOps Demo on RedHat OpenShift - with Insomnia, Kong Konnect and Tekton on ROSA
+# APISecOps Demo on RedHat OpenShift - Insomnia, Kong Konnect, Tekton on ROSA
 
 Here at Kong APISecOps centers around four core fundmentals:
 
-* **Centralization** - centralize API Management to a single control plane. Irrespective of cloud provider, or platform, all can be managed from the same control plane.
+* **Centralization** - entralize API Management to a single control plane. Irrespective of cloud provider, or platform, all can be managed from the same control plane.
 
 * **Governance** - a governance team should be able easily customize API linting for security concerns and quickly validate.
 
-* **API Design First** - Development Team should design and document the API upfront to validate they are update to date with current governance requirements, and accurate documentation.
+* **API Design First** - Development Teams should design and document the API upfront to validate they are update to date with current governance requirements, and accurate documentation.
 
 * **GitOps** - The API Spec, supporting documentation, governance, and API administrative should all be handled via gitops best practices for speed, reslience, and reliablity in the process.
 
-The objective of this demo is to showcase how to streamline API management with the above APISecOps best practices in mind on Red Hat OpenShift.
+The objective of this demo is to showcase how to streamline Kong API management with the above APISecOps best practices in mind with Kong in the Red Hat Openshift Ecosystem.
+
+## Tutorial Overview
+
+First, a brief overview of the core infrastructure laid down.
+
+**Konnect**
+
+Two Runtime Groups will be either created or at least checked that it exists - Default, and Dev. Each runtime group will be provisioned 1 runtime instance (also referred to as a Gateway, Dataplane, or Proxy), each one will be in their own namespace, kong-sandbox, and kong-dev. These Gateways are exposed via loadbalancers, and are where API Consumers can call the protected backend services.
+
+**Openshift Pipelines/Tekton**
+
+There are three tekton pipelines:
+
+1. **disputes-apispec-review pipeline** - will open a pr to push apispec to konnect-sandbox runtime group.
+2. **api-gateway-sandbox-pipeline** - review open prs on sandbox, execute governance tests, and api administration to the konnect sandbox runtime group.
+3. **api-gatway-dev-pipeline** - will open pr to publish apispec to dev runtime group and Konnect Service Hub for Dev Portal Integration.
+
+**Gitea (Self-hosted Git service)**
+
+Gitea is a self-hosted Git service. It is stood up in the cluster in the `gitea` namespace. Two the git repos required to run the demo are imported, and any dummy passwords needed for the demo are seeded in the projects and provided to the user. This is just to minimize external dependencies.
+
+**Disputes Sample Application**
+
+The sample application is deployed in `disputes-dev` namespace. It is a very small JBoss EAP application server.
+
+**Diagram**
+
+The diagram below a high level architecture overview of the pipeline-to-infrastucture setup summarizing what was just discussed. One thing to clarify, this demo is run within 1 cluster, but in order to clearly depict the tekton pipeline ci/cd and the infra it is depicted as two. It's really just all in the same cluster.
 
 <img src="img/arch.png" alt="kong apisecops apiops rosa"/>
 
 ## Prequisites
 
-1. **Openshift Cluster** - This demo will step through the rosa cli command to create a ROSA cluster but any OpenShift cluster will suffice. This demo has been tested on 4.11.
+1. **Openshift Cluster** - This demo will step through the rosa cli command to create a ROSA cluster but any OpenShift cluster will suffice. This demo has been tested on OCP 4.11.
 
 2. **Ansible Core >= 2.13** -  The playbooks have been tested on 2.13.5 and python version 3.10.8. More information can be found at [Installing Ansible][Ansible_Install_Distros].
 
@@ -73,14 +101,14 @@ Validate you can login to the cluster via the credentials provided by the rosa c
 
 Execute the install ansible playbook. The play will do the following:
 
-* Cert Manager Operator - install and create Konnect DP self-signed certs
-* Openshift Pipelines Operator - install
-* Gitea - install and configure
-* Konnect
+* **Cert Manager Operator** - install and create Konnect DP self-signed certs
+* **Openshift Pipelines Operator** - install
+* **Gitea** - install and configure
+* **Konnect**
   * create and/or configure runtime groups (Default and Dev)
-  * create konnect dataplanes (runtime instances)
-* Create APIOps Namespaces, install Tekton Pipelines and create Tekton Pipeline Runs
-* Deploy Disputes Sample Application
+  * create konnect gateways (runtime instances)
+* **APIOps** - create namespaces, install tekton pipelines and create tekton pipelineruns
+* **Disputes Sample App** - create namespace and deploy
 
 ```console
 ansible-playbook ansible/playbook.yaml --extra-vars "konnect_email=<yourEmail> konnect_pass=<yourPassword>"
