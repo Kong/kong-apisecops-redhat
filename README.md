@@ -16,6 +16,10 @@ The objective of this demo is to showcase how to streamline Kong API management 
 
 First, a brief overview of the core infrastructure laid down.
 
+<img src="img/arch.png" alt="kong apisecops apiops rosa"/>
+
+*Note - just to clarify this demo is run within 1 cluster, but in order to clearly depict the tekton pipeline ci/cd and the infra it is depicted as two. It's really just all in the same cluster.*
+
 **Konnect**
 
 Two Runtime Groups will be either created or at least checked that it exists - Default, and Dev. Each runtime group will be provisioned 1 runtime instance (also referred to as a Gateway, Dataplane, or Proxy), each one will be in their own namespace, kong-sandbox, and kong-dev. These Gateways are exposed via loadbalancers, and are where API Consumers can call the protected backend services.
@@ -38,9 +42,7 @@ The sample application is deployed in `disputes-dev` namespace. It is a very sma
 
 **Diagram**
 
-The diagram below a high level architecture overview of the pipeline-to-infrastucture setup summarizing what was just discussed. One thing to clarify, this demo is run within 1 cluster, but in order to clearly depict the tekton pipeline ci/cd and the infra it is depicted as two. It's really just all in the same cluster.
-
-<img src="img/arch.png" alt="kong apisecops apiops rosa"/>
+The diagram below a high level architecture overview of the pipeline-to-infrastucture setup summarizing what was just discussed. 
 
 ## Prequisites
 
