@@ -24,17 +24,19 @@ The objective of this demo is to showcase how to streamline Kong API management 
 
 ## Tutorial Overview
 
-### Activities
+### AcmeBank Disputes APISpec Tutorial
 
-Four tasks will be executed to demonstrate how take a APISpec from design in Insomnia to automated API administration that will be promoted to two Konnect environments.
+For this tutorial you will be working on the Acmebank Disputes APISpec.
 
-**First**, via the Insomnia Design Tool, the APISpec will be imported, updated, and changes commited to source control.
+**First**, you will get hands on experiences with Insomnia. The Disputes APISpec will be imported, updated, and the changes commited to source control all from Insomnia.
 
-**Second**, once the apispec is commited, three CI/CD pipelines will be manually executed that will submit the apispec for review, a review/governance pipeline to validate it passes custom requirements, and promote the API to the appropriate environment:
+**Second**, once the APISpec has been commited to source controle, you will execute three tekton CI/CD pipelines sequentially, to review and publish the API to the appropriate Gateway Environment.
 
-1. **disputes-apispec-review pipeline** - will open a pr to push apispec to konnect-sandbox runtime group.
-2. **api-gateway-sandbox-pipeline** - review open prs on sandbox, execute governance tests, and api administration to the konnect sandbox runtime group.
-3. **api-gatway-dev-pipeline** - will open pr to publish apispec to dev runtime group and Konnect Service Hub for Dev Portal Integration.
+1. **disputes-apispec-review pipeline** - will open a pr to push the APISpec to the konnect-sandbox runtime group.
+2. **api-gateway-sandbox-pipeline** - will review open prs to konnect-sandbox: execute custom governance linting of the APISpec, validate the deck transformation, and finally deck sync to administer the API to to the konnect-sandbox runtime group.
+3. **api-gatway-dev-pipeline** - will publish the APISpec to konnect-dev runtime group and Konnect Service Hub for Dev Portal Integration.
+
+The diagram below summarizes the steps described above and aligns the pipelines to the Konnect Infrastructure.
 
 <img src="img/arch.png" alt="kong apisecops apiops rosa"/>
 
@@ -50,11 +52,13 @@ Each runtime group will be provisioned 1 runtime instance (also referred to as a
 
 **Openshift Pipelines/Tekton**
 
-The three pipelines to be executed will be in the namespaces `disputes-apispec` and `apiops-gateway` namespaces respectively. The seperate is demonstrate how pipeliens belonging to different personas (Dev Teams vs. Governance and API Operator teams) can be managed in a more secure fashion.
+The three pipelines to be executed will be in the namespaces `disputes-apispec` and `apiops-gateway` namespaces respectively. The seperation between namespaces is demonstrate how pipelines belonging to different personas (Dev Teams vs. Governance and API Operator teams) can be managed in a more secure fashion.
 
 **Gitea (Self-hosted Git service)**
 
-Gitea is a self-hosted Git service. It is stood up in the cluster in the `gitea` namespace. Two the git repos required to run the demo are imported, and any dummy passwords needed for the demo are seeded in the projects and provided to the user. This is just to minimize external dependencies.
+Gitea is a self-hosted Git service. It is stood up in the cluster in the `gitea` namespace. Two the git repos required to run the demo are imported, and any dummy passwords needed for the demo are seeded in the projects and provided to the user. Details on the two repositories:
+
+`acmeback-disputes-apispec`: Contains the `.insomnia` design disputes API Design doc.
 
 **Disputes Sample Application**
 
@@ -126,7 +130,58 @@ Any required information, urls, dummy passwords, load balancers, are spit out as
 
 ## Devops Tutorial
 
-### Step 1
+### Step 1 - Update the APISpec in Insomnia
+
+**Import the APISpec**
+
+Copy the `gitea url`, located in `ansible/demo_facts.json` to your clipboard.
+
+In the browser navigate to gitea url --> trust the certificate, it is a self-signed cert provisioned by the Openshift CA --> login with username, password `gitea` and `openshift` --> navigate to `acmebank-disputes-apispec` --> select `copy` to copy HTTP repo url.
+
+Open Insomnia --> Within your Personal Project Select `Import From` --> in the dropdown select `Git Clone` --> a `Configure Repository` Window will open.
+
+In `Configure Repository` --> Select the `Git` Tab --> Fill in the following details:
+
+* **Git URI** - url to acmebank-disputes-apispec in your clipboard (example: `http://gitea-gitea.apps.df-rosa.14w1.p1.openshiftapps.com/gitea/acmebank-disputes-apispec.git`)
+
+* **Author Name** - apisecops-demo
+* **Author Email** - apisecops@demo-example.com
+* **Username** - gitea
+* **Authenticatino Token** - openshift
+
+Within your Insomnia Project you should see 1 design document, `disputes.yaml`. Open the document to make corrections.
+
+**Fix OAS Linting Concerns**
+
+1. `line 2 - info object must have "contact" object` Copy the following to the info object:
+
+```console
+    contact: 
+        name: "AcmeBank Disputes Team"
+        url: "http://disputes-acmebank.com/support"
+        email: "disputes-support@acmebank.com"
+```
+
+2. `line 25 - Operation "description" must be present and non-empty string` This is pertaining to the /disputes.get.operation object. To the object add the `description` field and string as show below:
+
+```console
+    operationId: "getListDispute"
+    description: "Returns a list of Disputes"
+    summary: Return a list of disputes
+```
+
+3. `line 62 - Operation "description" must be present and non-empty string` This again is the same error as above, but to the /disputes/{id}.get.operation object. 
+
+To the object add the `description` field and string as show below:
+
+```console
+      operationId: "getDispute"
+      ...
+      description: "Return a dispute by id"
+      summary: Return a dispute by id.
+```
+
+### Step 2
 
 Dev Team Persona - APISpec Design is complete, pr to security team for review and deploy to sandbox environment.
 
@@ -136,7 +191,7 @@ Execute Pipeline 1:
 oc create -f run/disputes-pipeline-run.yaml
 ```
 
-### Step 2
+### Step 3
 
 APIOps Persona - automatically validate the new apispec, and deploy to sandbox for teams to begin discovering and developing aginst
 
@@ -148,7 +203,7 @@ oc create -f run/apiops-sandbox-pipeline-run.yaml
 
 As an APIOps Person - I will have a PR approval process protecting my branches. In the case of the demo an APIOperator will manually merge in the pr.
 
-### Step 3
+### Step 4
 
 Dev Persona - I am ready to let teams test the working API, I will deploy the dev, and request security to deploy the api to dev.
 
