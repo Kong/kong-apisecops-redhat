@@ -24,11 +24,23 @@ The objective of this demo is to showcase how to streamline Kong API management 
 
 ## Tutorial Overview
 
-First, a brief overview of the core infrastructure laid down.
+### Activities
+
+Four tasks will be executed to demonstrate how take a APISpec from design in Insomnia to automated API administration that will be promoted to two Konnect environments.
+
+**First**, via the Insomnia Design Tool, the APISpec will be imported, updated, and changes commited to source control.
+
+**Second**, once the apispec is commited, three CI/CD pipelines will be manually executed that will submit the apispec for review, a review/governance pipeline to validate it passes custom requirements, and promote the API to the appropriate environment:
+
+1. **disputes-apispec-review pipeline** - will open a pr to push apispec to konnect-sandbox runtime group.
+2. **api-gateway-sandbox-pipeline** - review open prs on sandbox, execute governance tests, and api administration to the konnect sandbox runtime group.
+3. **api-gatway-dev-pipeline** - will open pr to publish apispec to dev runtime group and Konnect Service Hub for Dev Portal Integration.
 
 <img src="img/arch.png" alt="kong apisecops apiops rosa"/>
 
 *Note - just to clarify this demo is run within 1 cluster, but in order to clearly depict the tekton pipeline ci/cd and the infra it is depicted as two. It's really just all in the same cluster.*
+
+### Infrastructure
 
 **Konnect**
 
@@ -38,11 +50,7 @@ Each runtime group will be provisioned 1 runtime instance (also referred to as a
 
 **Openshift Pipelines/Tekton**
 
-Three tekton piplines will be run:
-
-1. **disputes-apispec-review pipeline** - will open a pr to push apispec to konnect-sandbox runtime group.
-2. **api-gateway-sandbox-pipeline** - review open prs on sandbox, execute governance tests, and api administration to the konnect sandbox runtime group.
-3. **api-gatway-dev-pipeline** - will open pr to publish apispec to dev runtime group and Konnect Service Hub for Dev Portal Integration.
+The three pipelines to be executed will be in the namespaces `disputes-apispec` and `apiops-gateway` namespaces respectively. The seperate is demonstrate how pipeliens belonging to different personas (Dev Teams vs. Governance and API Operator teams) can be managed in a more secure fashion.
 
 **Gitea (Self-hosted Git service)**
 
