@@ -2,15 +2,25 @@
 
 Here at Kong APISecOps centers around four core fundmentals:
 
-* **Centralization** - entralize API Management to a single control plane. Irrespective of cloud provider, or platform, all can be managed from the same control plane.
+* **Centralization** - Centralize API Management to a single control plane. Irrespective of cloud provider, or platform, all APIs can be managed from the same control plane.
 
-* **Governance** - a governance team should be able easily customize API linting for security concerns and quickly validate.
+* **Governance** - A governance team should be able easily customize API linting for security concerns and quickly validate.
 
 * **API Design First** - Development Teams should design and document the API upfront to validate they are update to date with current governance requirements, and accurate documentation.
 
 * **GitOps** - The API Spec, supporting documentation, governance, and API administrative should all be handled via gitops best practices for speed, reslience, and reliablity in the process.
 
 The objective of this demo is to showcase how to streamline Kong API management with the above APISecOps best practices in mind with Kong in the Red Hat Openshift Ecosystem.
+
+## Prequisites
+
+1. **Openshift Cluster** - This demo will step through the rosa cli command to create a ROSA cluster but any OpenShift cluster will suffice. This demo has been tested on OCP 4.11.
+
+2. **Ansible Core >= 2.13** - The playbooks have been tested on 2.13.5 and python version 3.10.8. More information can be found at [Installing Ansible][Ansible_Install_Distros].
+
+3. **Kong Konnect Plus Account** - The demo requires and *Konnect Plus* grade account because 2 runtime groups and several enterprise grade plugins are used. For more information please review the [Kong Konnect Pricing Plan][Konnect_Pricing].
+
+4. **Insomnia** - To download check out [Insomnia Download][Insomnia_Install].
 
 ## Tutorial Overview
 
@@ -22,11 +32,13 @@ First, a brief overview of the core infrastructure laid down.
 
 **Konnect**
 
-Two Runtime Groups will be either created or at least checked that it exists - Default, and Dev. Each runtime group will be provisioned 1 runtime instance (also referred to as a Gateway, Dataplane, or Proxy), each one will be in their own namespace, kong-sandbox, and kong-dev. These Gateways are exposed via loadbalancers, and are where API Consumers can call the protected backend services.
+Two Runtime Groups will be either created or at least checked that it exists - Default, and Dev.
+
+Each runtime group will be provisioned 1 runtime instance (also referred to as a Gateway, Dataplane, or Proxy), each one will be in their own namespace, kong-sandbox, and kong-dev. These Gateways are exposed via loadbalancers, and are where API Consumers can call the protected backend services.
 
 **Openshift Pipelines/Tekton**
 
-There are three tekton pipelines:
+Three tekton piplines will be run:
 
 1. **disputes-apispec-review pipeline** - will open a pr to push apispec to konnect-sandbox runtime group.
 2. **api-gateway-sandbox-pipeline** - review open prs on sandbox, execute governance tests, and api administration to the konnect sandbox runtime group.
@@ -39,20 +51,6 @@ Gitea is a self-hosted Git service. It is stood up in the cluster in the `gitea`
 **Disputes Sample Application**
 
 The sample application is deployed in `disputes-dev` namespace. It is a very small JBoss EAP application server.
-
-**Diagram**
-
-The diagram below a high level architecture overview of the pipeline-to-infrastucture setup summarizing what was just discussed. 
-
-## Prequisites
-
-1. **Openshift Cluster** - This demo will step through the rosa cli command to create a ROSA cluster but any OpenShift cluster will suffice. This demo has been tested on OCP 4.11.
-
-2. **Ansible Core >= 2.13** -  The playbooks have been tested on 2.13.5 and python version 3.10.8. More information can be found at [Installing Ansible][Ansible_Install_Distros].
-
-3. **Kong Konnect Plus Account** - The demo requires and *Plus* grade account because 2 runtime groups and several enterprise grade plugins. For more information please review the [Kong Konnect Pricing Plan][Konnect_Pricing].
-
-4. **Insomnia** - To download check out [Insomnia Download][Insomnia_Install].
 
 ## Project Directory Overview
 
@@ -119,7 +117,6 @@ ansible-playbook ansible/playbook.yaml --extra-vars "konnect_email=<yourEmail> k
 Any required information, urls, dummy passwords, load balancers, are spit out as the last task in the ansible playbook, and saved in the `ansible/demo_facts.json` file for safe keeping.
 
 ## Devops Tutorial
-
 
 ### Step 1
 
