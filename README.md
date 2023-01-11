@@ -20,7 +20,7 @@ The objective of this demo is to showcase how to streamline Kong API management 
 
 **Operations Team** - The operations team will have tasks in the CI/CD pipeline to convert the APISpec to a kong deck configuration file (inso cli), meets the env requirements, and sync the deck configuration (deck cli) to the Konnect control plane.
 
-These three activities as shown in the diagram above will be managed through end-2-end gitops practices.
+These three activities as shown in the diagram above will be automated end-2-end  through gitops and CI/CD best practices.
 
 ## Prequisites
 
@@ -120,29 +120,34 @@ Any required information, urls, dummy passwords, load balancers, are spit out as
 
 ## Devops Tutorial
 
-### Step 1 - Update the APISpec in Insomnia
+### 1. API Design - Update the APISpec in Insomnia
 
 **Import the APISpec**
 
-i. Copy the gitea url, located in ansible/demo_facts.json to your clipboard.
+* Copy the gitea url, located in ansible/demo_facts.json to your clipboard.
 
-ii. In the browser navigate to gitea url --> trust the certificate, it is a self-signed cert provisioned by the Openshift CA --> login with username, password gitea and openshift --> navigate to `acmebank-disputes-apispec` --> select `copy` to copy HTTP repo url.
+* Copy gitea acmebank-disputes-apispec to your clipboard
+  * In the browser navigate to gitea url, trust the certificate, it is a self-signed cert provisioned by the Openshift CA.
+  * Login with username, password gitea and openshift.
+  * Navigate to acmebank-disputes-apispec repository.
+  * Copy the HTTP repo url.
 
-Open Insomnia --> Within your Personal Project Select `Import From` --> in the dropdown select `Git Clone` --> a `Configure Repository` Window will open.
+* Import APISpec in Insomnia Desktop Application
+  * Open Insomnia on the Desktop.
+  * Within your Personal Project Select `Import From`
+  * In the dropdown select `Git Clone`.
+  * The `Configure Repository` Window will open.
 
-In `Configure Repository` --> Select the `Git` Tab --> Fill in the following details:
+* In the `Configure Repository`, fill in the following details:
+  * **Git URI** - url to acmebank-disputes-apispec in your clipboard (example: `http://gitea-gitea.apps.df-rosa.14w1.p1.openshiftapps.com/gitea/acmebank-disputes-apispec.git`)
+  * **Author Name** - apisecops-demo
+  * **Author Email** - apisecops@demo-example.com
+  * **Username** - gitea
+  * **Authentication Token** - openshift
 
-* **Git URI** - url to acmebank-disputes-apispec in your clipboard (example: `http://gitea-gitea.apps.df-rosa.14w1.p1.openshiftapps.com/gitea/acmebank-disputes-apispec.git`)
-
-* **Author Name** - apisecops-demo
-* **Author Email** - apisecops@demo-example.com
-* **Username** - gitea
-* **Authenticatino Token** - openshift
-
-Within your Insomnia Project you should see 1 design document, `disputes.yaml`. Open the document to make corrections.
+Within your Insomnia Project you should now see 1 design document, `disputes.yaml`. Open the document to make corrections.
 
 **Fix OAS Linting Concerns**
-
 
 1. `line 2 - info object must have "contact" object` Copy the following to the info object:
 
@@ -161,7 +166,7 @@ Within your Insomnia Project you should see 1 design document, `disputes.yaml`. 
     summary: Return a list of disputes
 ```
 
-3. `line 62 - Operation "description" must be present and non-empty string` This again is the same error as above, but to the /disputes/{id}.get.operation object. 
+3. `line 62 - Operation "description" must be present and non-empty string` This again is the same error as above, but to the /disputes/{id}.get.operation object.
 
 To the object add the `description` field and string as show below:
 
@@ -176,9 +181,9 @@ To the object add the `description` field and string as show below:
 
 At the top of the document, you will see a button `master` that reflects the branch you are working on, in this case the master branch. Select the button, in the dropdown select `commit` --> then select `push`. The changes have now been committed to the master branch.
 
-### Step 2 - Submit the APISpec for Review
+### 2. Submit the APISpec for Review
 
-This step is for the **Dev Persona**.
+This step is for the **Developer Persona**.
 
 Once the APISpec is ready to review,  the disputes-apispec-review pipeline will be executed. This pipeline will:
 
