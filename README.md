@@ -1,7 +1,7 @@
 # APISecOps - Insomnia, Kong Konnect, Tekton - on ROSA
 
 <p align="center">
-  <img src="https://2tjosk2rxzc21medji3nfn1g-wpengine.netdna-ssl.com/wp-content/uploads/2018/08/kong-combination-mark-color-256px.png" /></div>
+  <img src="https://konghq.com/wp-content/uploads/2018/08/kong-combination-mark-color-256px.png" /></div>
 </p>
 
 ## Table of Contents
@@ -10,25 +10,24 @@
 
 <!-- code_chunk_output -->
 
-1. [Table of Contents](#table-of-contents)
-2. [Introduction](#introduction)
-3. [Prerequisites](#prequisites)
-4. [TutorialOverview](#tutorial-overview)
+* [Introduction](#introduction)
+* [Prerequisites](#prequisites)
+* [TutorialOverview](#tutorial-overview)
     1. [AcmeBank Disputes APISpec](#acmebank-disputes-apispec)
     2. [Infrastructure](#infrastructure)
-5. [Getting Started](#getting-started)
+* [Getting Started](#getting-started)
     1. [Download Git Repo](#download-git-repo)
     2. [ROSA](#rosa)
     3. [Ansible](#ansible)
-6. [Devops Tutorial](#tutorial-overview)
+* [Devops Tutorial](#tutorial-overview)
     1. [API Design](#1-api-design---update-the-apispec-in-insomnia)
     2. [Review Pipeline](#2-submit-the-apispec-for-review)
     3. [Sandbox Pipeline](#3-governance-review-and-publish-api-to-konnect-sandbox-gateway-environment)
     4. [Dev Pipeline](#4-publish-api-to-konnect-dev-gateway-environment)
-7. [Cleanup](#cleanup)
-8. [Project Directory Overview](#project-directory-overview)
-9. [References and Links](#references)
-10. [License](#license)
+* [Cleanup](#cleanup)
+* [Project Directory Overview](#project-directory-overview)
+* [References and Links](#references)
+* [License](#license)
 
 <!-- /code_chunk_output -->
 
