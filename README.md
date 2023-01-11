@@ -32,6 +32,10 @@ These three activities as shown in the diagram above will be automated end-2-end
 
 4. **Insomnia** - To download check out [Insomnia Download][Insomnia_Install].
 
+5. **oc cli** - The binary download can be found in the openshift console, in the ? tab on the top.
+
+6. **Helm 3 cli** - Follow the helm documentation to install the binary [Helm Install][Helm_Install]
+
 ## Tutorial Overview
 
 ### AcmeBank Disputes APISpec
@@ -77,6 +81,12 @@ The sample application is deployed in `disputes-dev` namespace. It is a very sma
 
 ## Deploy Infrastructure
 
+### Download APISecOps Git Repo
+
+```console
+https://github.com/Kong/kong-apisecops-redhat.git
+```
+
 ### ROSA
 
 Create System Variables:
@@ -100,7 +110,17 @@ rosa create admin --cluster $CLUSTER_NAME
 
 Validate you can login to the cluster via the credentials provided by the rosa cli stdout. Once login is successful you can proceed to the next step.
 
-### ROSA and Konnect Configuration
+### Ansible
+
+**Ansible prerequisites**
+
+Install ansible collections required by the playbook:
+
+```console
+ansible-galaxy install -r ansible/requirements.yml
+```
+
+**ROSA and Konnect Configuration**
 
 Execute the install ansible playbook. The play will do the following:
 
@@ -300,6 +320,32 @@ For the dev environment, the gatey configuration has been setup to proxy request
 * Change to the `Konnect-Dev` Environment
 * Execute the disputes requests to validate the behavior. You should see new responses, and possibly a 404 on /disputes/{id} (because it's in Dev and still in testing 😆).
 
+## Cleanup
+
+**Kong**ratulations on completing the workshop! Now its time to delete the infrastructure you’ve created in order to work through the material.
+
+**Delete Konnect Gateways**
+
+Run the unistall playbook to tear down the konnect gateways deployed on the cluster:
+
+```console
+ansible-playbook ansible/playbook-uninstall.yaml
+```
+
+**Delete ROSA Cluster**
+
+Delete the ROSA cluster-admin user:
+
+```console
+rosa delete admin --cluster $CLUSTER_NAME
+```
+
+Delete ROSA cluster:
+
+```console
+rosa delete cluster --cluster $CLUSTER_NAME
+```
+
 ## Project Directory Overview
 
 ```console
@@ -333,3 +379,4 @@ For the dev environment, the gatey configuration has been setup to proxy request
 [Ansible_Install_Distros]: https://docs.ansible.com/ansible/latest/installation_guide/installation_distros.html
 [Rosa_Docs]: https://docs.openshift.com/rosa/rosa_getting_started/rosa-quickstart-guide-ui.html
 [Insomnia_Install]: https://insomnia.rest/download
+[Helm_Install]: https://helm.sh/docs/intro/install/
