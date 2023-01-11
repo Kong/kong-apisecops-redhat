@@ -16,9 +16,9 @@ The objective of this demo is to showcase how to streamline Kong API management 
 
 **Development Team** - The responsiblity of the Development Team is to Design the API in Insomnia Desktop Application upfront taking into account both the product requirements and governance requirements. With the inso cli tooling, the team can also lint the spec before committing the spec to source control.
 
-**Governance Team** - The responsibility of the Governance Team is to build out custom security rules that align with the organizations standards. These rules are then executed during the CI/CD pipeline to regularly evaluate new or updating APIs.
+**Governance Team** - The responsibility of the Governance Team is to build out custom security rules that align with the organizations standards. These rules are then executed during the CI/CD pipeline to evaluate if new or updating APIs comply.
 
-**Operations Team** - The operations team will have tasks in the CI/CD pipeline to convert the APISpec to a kong deck configuration file (inso cli), meets the env requirements, and sync the deck configuration (deck cli) to the Konnect control plane.
+**Operations Team** - The operations team will have tasks in the CI/CD pipeline to convert the APISpec to a kong deck configuration file (inso cli), validates the deck meets the operational requirements, and sync the deck configuration (deck cli) to the Konnect control plane.
 
 These three activities as shown in the diagram above will be automated end-2-end  through gitops and CI/CD best practices.
 
@@ -124,12 +124,12 @@ Any required information, urls, dummy passwords, load balancers, are spit out as
 
 **Import the APISpec**
 
-* Copy the gitea url, located in ansible/demo_facts.json to your clipboard.
+* Copy the `gitea url`, located in ansible/demo_facts.json to your clipboard.
 
-* Copy gitea acmebank-disputes-apispec to your clipboard
-  * In the browser navigate to gitea url, trust the certificate, it is a self-signed cert provisioned by the Openshift CA.
-  * Login with username, password gitea and openshift.
-  * Navigate to acmebank-disputes-apispec repository.
+* Copy gitea `acmebank-disputes-apispec` HTTP url to your clipboard
+  * In the browser navigate to the gitea url, trust the certificate (it is a self-signed cert provisioned by the Openshift CA).
+  * Login with username, password `gitea` and `openshift`.
+  * Navigate to `acmebank-disputes-apispec` repository.
   * Copy the HTTP repo url.
 
 * Import APISpec in Insomnia Desktop Application
@@ -179,26 +179,35 @@ To the object add the `description` field and string as show below:
 
 **Commit and Push Changes**
 
-At the top of the document, you will see a button `master` that reflects the branch you are working on, in this case the master branch. Select the button, in the dropdown select `commit` --> then select `push`. The changes have now been committed to the master branch.
+You will now commit and push the changes made to the APISpec back up to it's gitea repository.
+
+* Select the branch button `master`.
+* In the dropdown select `commit`, provide a commit message.
+* Then select `push`.
+
+The changes have now been committed to the master branch. Navigate to the gitea repo and validate the changes have been comitted.
 
 ### 2. Submit the APISpec for Review
 
-This step is for the **Developer Persona**.
+This step is for the **Developer Persona**
 
 Once the APISpec is ready to review,  the disputes-apispec-review pipeline will be executed. This pipeline will:
 
-* export the apispec from the .insomnia repo structure
-* standard OAS linting
-* create the pr for the konnect-sandbox env.
+* Export the apispec from the .insomnia repo structure
+* Standard OAS linting
+* Create the pr for the konnect-sandbox env.
 
-
-Execute Pipeline 1:
+From the cli, execute the first pipeline:
 
 ```console
 oc create -f run/disputes-pipeline-run.yaml
 ```
 
-### Step 3
+To view and validate the pipeline is running, navigate to the `disputes-apispec` project, and in the Pipeline Tab. A screenshot is below:
+
+<img src="img/pipelinerun-apispec-review.png" alt="kong apisecops apiops rosa"/>
+
+### 3. Governance Review and API Publish to Konnect Sandbox Gateway Environment
 
 APIOps Persona - automatically validate the new apispec, and deploy to sandbox for teams to begin discovering and developing aginst
 
