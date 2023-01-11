@@ -1,6 +1,6 @@
-# APISecOps Demo on RedHat OpenShift - Insomnia, Kong Konnect, Tekton on ROSA
+# APISecOps - Insomnia, Kong Konnect, Tekton - on ROSA
 
-Here at Kong APISecOps centers around four core fundmentals:
+APISecOps stands for API design, security, and operations. Here at Kong APISecOps centers around four core fundmentals:
 
 * **Centralization** - Centralize API Management to a single control plane. Irrespective of cloud provider, or platform, all APIs can be managed from the same control plane.
 
@@ -10,7 +10,17 @@ Here at Kong APISecOps centers around four core fundmentals:
 
 * **GitOps** - The API Spec, supporting documentation, governance, and API administrative should all be handled via gitops best practices for speed, reslience, and reliablity in the process.
 
-The objective of this demo is to showcase how to streamline Kong API management with the above APISecOps best practices in mind with Kong in the Red Hat Openshift Ecosystem.
+The objective of this demo is to showcase how to streamline Kong API management with the above APISecOps best practices in mind with Kong in the Red Hat Openshift Ecosystem. We will step through the responsibilities of the three personas, Development, Governance and Operations Teams, and the automation of these personas with Openshift Pipelines - Red Hat’s cloud-native CI/CD solution.
+
+<img src="img/personas.png" alt="kong apisecops apiops personas"/>
+
+**Development Team** - The responsiblity of the Development Team is to Design the API in Insomnia Desktop Application upfront taking into account both the product requirements and governance requirements. With the inso cli tooling, the team can also lint the spec before committing the spec to source control.
+
+**Governance Team** - The responsibility of the Governance Team is to build out custom security rules that align with the organizations standards. These rules are then executed during the CI/CD pipeline to regularly evaluate new or updating APIs.
+
+**Operations Team** - The operations team will have tasks in the CI/CD pipeline to convert the APISpec to a kong deck configuration file (inso cli), meets the env requirements, and sync the deck configuration (deck cli) to the Konnect control plane.
+
+These three activities as shown in the diagram above will be managed through end-2-end gitops practices.
 
 ## Prequisites
 
@@ -24,13 +34,13 @@ The objective of this demo is to showcase how to streamline Kong API management 
 
 ## Tutorial Overview
 
-### AcmeBank Disputes APISpec Tutorial
+### AcmeBank Disputes APISpec
 
 For this tutorial you will be working on the Acmebank Disputes APISpec.
 
-**First**, you will get hands on experiences with Insomnia. The Disputes APISpec will be imported, updated, and the changes commited to source control all from Insomnia.
+**First**, you will get hands-on-experiences with Insomnia. The Disputes APISpec will be imported, updated, and the changes commited to source control all from Insomnia.
 
-**Second**, once the APISpec has been commited to source controle, you will execute three tekton CI/CD pipelines sequentially, to review and publish the API to the appropriate Gateway Environment.
+**Second**, once the APISpec has been commited to source control, you will execute three tekton CI/CD pipelines sequentially, to review and publish the API to the appropriate Gateway Environment.
 
 1. **disputes-apispec-review pipeline** - will open a pr to push the APISpec to the konnect-sandbox runtime group.
 2. **api-gateway-sandbox-pipeline** - will review open prs to konnect-sandbox: execute custom governance linting of the APISpec, validate the deck transformation, and finally deck sync to administer the API to to the konnect-sandbox runtime group.
@@ -63,26 +73,6 @@ Gitea is a self-hosted Git service. It is stood up in the cluster in the `gitea`
 **Disputes Sample Application**
 
 The sample application is deployed in `disputes-dev` namespace. It is a very small JBoss EAP application server.
-
-## Project Directory Overview
-
-```console
-├── README.md 
-├── ansible                           <-- ansible scripts
-│   ├── disputes
-│   ├── playbook-uninstall.yaml
-│   ├── playbook.yaml
-│   ├── tasks
-│   └── vars
-├── konnect                           <-- konnect deck configuration, backup just in case need to re-align konnect runtime group configuration
-│   ├── deck-default-rg.yaml
-│   ├── ...
-│   └── deck-disputes-dev-rg.yaml
-└── run                               <-- tekton pipeline runs
-    ├── apiops-dev-pipeline-run.yaml
-    ├── apiops-sandbox-pipeline-run.yaml
-    └── disputes-pipeline-run.yaml
-```
 
 ## Deploy Infrastructure
 
@@ -134,9 +124,9 @@ Any required information, urls, dummy passwords, load balancers, are spit out as
 
 **Import the APISpec**
 
-Copy the `gitea url`, located in `ansible/demo_facts.json` to your clipboard.
+i. Copy the gitea url, located in ansible/demo_facts.json to your clipboard.
 
-In the browser navigate to gitea url --> trust the certificate, it is a self-signed cert provisioned by the Openshift CA --> login with username, password `gitea` and `openshift` --> navigate to `acmebank-disputes-apispec` --> select `copy` to copy HTTP repo url.
+ii. In the browser navigate to gitea url --> trust the certificate, it is a self-signed cert provisioned by the Openshift CA --> login with username, password gitea and openshift --> navigate to `acmebank-disputes-apispec` --> select `copy` to copy HTTP repo url.
 
 Open Insomnia --> Within your Personal Project Select `Import From` --> in the dropdown select `Git Clone` --> a `Configure Repository` Window will open.
 
@@ -152,6 +142,7 @@ In `Configure Repository` --> Select the `Git` Tab --> Fill in the following det
 Within your Insomnia Project you should see 1 design document, `disputes.yaml`. Open the document to make corrections.
 
 **Fix OAS Linting Concerns**
+
 
 1. `line 2 - info object must have "contact" object` Copy the following to the info object:
 
@@ -181,9 +172,20 @@ To the object add the `description` field and string as show below:
       summary: Return a dispute by id.
 ```
 
-### Step 2
+**Commit and Push Changes**
 
-Dev Team Persona - APISpec Design is complete, pr to security team for review and deploy to sandbox environment.
+At the top of the document, you will see a button `master` that reflects the branch you are working on, in this case the master branch. Select the button, in the dropdown select `commit` --> then select `push`. The changes have now been committed to the master branch.
+
+### Step 2 - Submit the APISpec for Review
+
+This step is for the **Dev Persona**.
+
+Once the APISpec is ready to review,  the disputes-apispec-review pipeline will be executed. This pipeline will:
+
+* export the apispec from the .insomnia repo structure
+* standard OAS linting
+* create the pr for the konnect-sandbox env.
+
 
 Execute Pipeline 1:
 
@@ -211,6 +213,26 @@ Execute Pipeline 3:
 
 ```console
 oc create -f run/apiops-dev-pipeline-run.yaml
+```
+
+## Project Directory Overview
+
+```console
+├── README.md 
+├── ansible                           <-- ansible scripts
+│   ├── disputes
+│   ├── playbook-uninstall.yaml
+│   ├── playbook.yaml
+│   ├── tasks
+│   └── vars
+├── konnect                           <-- konnect deck configuration, backup just in case need to re-align konnect runtime group configuration
+│   ├── deck-default-rg.yaml
+│   ├── ...
+│   └── deck-disputes-dev-rg.yaml
+└── run                               <-- tekton pipeline runs
+    ├── apiops-dev-pipeline-run.yaml
+    ├── apiops-sandbox-pipeline-run.yaml
+    └── disputes-pipeline-run.yaml
 ```
 
 ## References
