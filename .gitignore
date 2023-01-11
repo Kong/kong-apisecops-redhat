@@ -1,1 +1,3 @@
 run/*.yaml
+.DS_Store
+ansible/demo_facts.json
