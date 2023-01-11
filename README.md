@@ -1,5 +1,39 @@
 # APISecOps - Insomnia, Kong Konnect, Tekton - on ROSA
 
+<p align="center">
+  <img src="https://2tjosk2rxzc21medji3nfn1g-wpengine.netdna-ssl.com/wp-content/uploads/2018/08/kong-combination-mark-color-256px.png" /></div>
+</p>
+
+## Table of Contents
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=true} -->
+
+<!-- code_chunk_output -->
+
+1. [Table of Contents](#table-of-contents)
+2. [Introduction](#introduction)
+3. [Prerequisites](#prequisites)
+4. [TutorialOverview](#tutorial-overview)
+    1. [AcmeBank Disputes APISpec](#acmebank-disputes-apispec)
+    2. [Infrastructure](#infrastructure)
+5. [Getting Started](#getting-started)
+    1. [Download Git Repo](#download-git-repo)
+    2. [ROSA](#rosa)
+    3. [Ansible](#ansible)
+6. [Devops Tutorial](#tutorial-overview)
+    1. [API Design](#1-api-design---update-the-apispec-in-insomnia)
+    2. [Review Pipeline](#2-submit-the-apispec-for-review)
+    3. [Sandbox Pipeline](#3-governance-review-and-publish-api-to-konnect-sandbox-gateway-environment)
+    4. [Dev Pipeline](#4-publish-api-to-konnect-dev-gateway-environment)
+7. [Cleanup](#cleanup)
+8. [Project Directory Overview](#project-directory-overview)
+9. [References and Links](#references)
+10. [License](#license)
+
+<!-- /code_chunk_output -->
+
+## Introduction
+
 APISecOps stands for API design, security, and operations. Here at Kong APISecOps centers around four core fundmentals:
 
 * **Centralization** - Centralize API Management to a single control plane. Irrespective of cloud provider, or platform, all APIs can be managed from the same control plane.
@@ -79,12 +113,14 @@ Gitea is a self-hosted Git service. It is stood up in the cluster in the `gitea`
 
 The sample application is deployed in `disputes-dev` namespace. It is a very small JBoss EAP application server.
 
-## Deploy Infrastructure
+## Getting Started
 
-### Download APISecOps Git Repo
+### Download Git Repo
+
+Download this repository to your workstation:
 
 ```console
-https://github.com/Kong/kong-apisecops-redhat.git
+git clone https://github.com/Kong/kong-apisecops-redhat.git
 ```
 
 ### ROSA
@@ -379,4 +415,8 @@ rosa delete cluster --cluster $CLUSTER_NAME
 [Ansible_Install_Distros]: https://docs.ansible.com/ansible/latest/installation_guide/installation_distros.html
 [Rosa_Docs]: https://docs.openshift.com/rosa/rosa_getting_started/rosa-quickstart-guide-ui.html
 [Insomnia_Install]: https://insomnia.rest/download
-[Helm_Install]: https://helm.sh/docs/intro/install/
+[Helm_Install]: https://helm.sh/docs/intro/install
+
+## License
+
+[Apache 2.0](LICENSE)
