@@ -197,6 +197,10 @@ Once the APISpec is ready to review,  the disputes-apispec-review pipeline will 
 * Standard OAS linting
 * Create the pr for the konnect-sandbox env.
 
+The order of events and kong tooling to be used in the tekton pipeline is highlighted in the diagram below:
+
+<img src="img/1-apispec-pipeline-overview.png" alt="kong apisecops apiops rosa"/>
+
 From the cli, execute the first pipeline:
 
 ```console
@@ -205,11 +209,22 @@ oc create -f run/disputes-pipeline-run.yaml
 
 To view and validate the pipeline is running, navigate to the `disputes-apispec` project, and in the Pipeline Tab. A screenshot is below:
 
-<img src="img/pipelinerun-apispec-review.png" alt="kong apisecops apiops rosa"/>
+<img src="img/1-pipelinerun-apispec-review.png" alt="kong apisecops apiops rosa"/>
 
-### 3. Governance Review and API Publish to Konnect Sandbox Gateway Environment
+### 3. Governance Review and Publish API to Konnect-Sandbox Gateway Environment
 
-APIOps Persona - automatically validate the new apispec, and deploy to sandbox for teams to begin discovering and developing aginst
+This step is for the **Governance and Operations Personas**
+
+Now a PR is open on the apiops-gateway gitea repo, the sandbox pipeline can be executed. This pipeline will:
+
+* Execute standard OAS linting.
+* Execute custom governance linting rules.
+* Create the deck config from the apispec.
+* Add the mocking plugin to the apispec.
+
+The order of events and kong tooling to be used in the tekton pipeline is highlighted in the diagram below:
+
+<img src="img/2-sandbox-pipeline-overview.png" alt="kong apisecops apiops rosa"/>
 
 Execute Pipeline 2:
 
@@ -217,7 +232,11 @@ Execute Pipeline 2:
 oc create -f run/apiops-sandbox-pipeline-run.yaml
 ```
 
-As an APIOps Person - I will have a PR approval process protecting my branches. In the case of the demo an APIOperator will manually merge in the pr.
+To view and validate the pipeline is running, navigate to the `apiops-gateway` project, and in the Pipeline Tab. A screenshot is below:
+
+<img src="img/2-pipelinerun-sandbox.png" alt="kong apisecops apiops rosa"/>
+
+Once this Pipeline has run, navigate to the `apiops-gateway` gitea repo, and approve the pr opened on the sandbox branch.
 
 ### Step 4
 
