@@ -1,34 +1,38 @@
 --- 
 # konnect cert creation and put tasks
-    - name: Create the Dataplane Certificates
+    - name: "Create the Dataplane Certificates : {{ crt_secret }} - {{ runtime_group }}"
       kubernetes.core.k8s: 
         state: present
         template: "konnect-cert.j2.yaml"
 
-    - name: "Create Cert Var: {{crt_secret }}"
-      ansible.builtin.set_fact: 
-        crt: "{{ query('kubernetes.core.k8s', kind='Secret', namespace=namespace, resource_name=crt_secret) | first }}"
+    - name: "Get Cert Secret: {{ crt_secret }} - {{ runtime_group }}"
+      kubernetes.core.k8s_info: 
+        kind: Secret
+        name: "{{ crt_secret }}" 
+        wait: yes
+        namespace: "{{ namespace }}"
+      register: crt_resource
 
-    - name: "Base64 Decode Cert: {{ crt_secret }}"
+    - name: "Create crt_resource fact {{ crt_secret }} - {{ runtime_group }}"
       ansible.builtin.set_fact: 
-        crt_raw: "{{ crt.data['tls.crt'] | b64decode }}"
+        crt_resource : "{{ crt_resource.resources[0] }}"
+
+    - name: "Base64 Decode Cert: {{ crt_secret }} - {{ runtime_group }}"
+      ansible.builtin.set_fact: 
+        crt_raw: "{{ crt_resource['data']['tls.crt'] | b64decode }}"
   
-    - name: "Awk Cert: {{ crt_secret }}"
+    - name: "Awk Cert: {{ crt_secret }} - {{ runtime_group }}"
       ansible.builtin.shell: |
         echo "{{ crt_raw }}" | awk '{printf "%s\\n", $0}'
       register: res
     
-    - name: "Get Cert from Awk Output: {{ crt_secret }}"
+    - name: "Get Cert from Awk Output: {{ crt_secret }} - {{ runtime_group }}"
       ansible.builtin.set_fact: 
        crt: "{{ res.stdout }}"
         
-    - name: "Cert Prepped for Konnect: {{ crt_secret }}"
-      debug: 
-        var: crt
-
-    - name: "Push Certificates to Konnect: {{ crt_secret }}"
+    - name: "Push Certificates to Konnect: {{ crt_secret }} - {{ runtime_goup }}"
       block:
-        - name: GET Konnect Control Plane Data
+        - name: "GET Konnect Runtime Group Data - {{ runtime_group }}"
           ansible.builtin.uri:
             url: "https://{{ api_url }}/v2/runtime-groups?filter%5Bname%5D%5Beq%5D={{ runtime_group }}"
             method: GET
@@ -37,20 +41,24 @@
               Cookie: "{{ login.cookies_string }}"
           register: cp_content
         
-        - ansible.builtin.debug: 
+        - name: "GET Konnect Runtime Group Data Response - {{ runtime_group }}"
+          ansible.builtin.debug: 
             var: cp_content
+            verbosity: 2
 
-        - name: Control Plane Facts
+        - name: "Control Plane Facts - {{ runtime_group }}"
           ansible.builtin.set_fact:
             konnect_cp_id: "{{ cp_content.json.data[0]['id'] }}"
             konnect_cp_name: "{{ cp_content.json.data[0]['name']}}"
             konnect_cp_endpoint: "{{ cp_content.json.data[0]['config']['control_plane_endpoint'] | regex_replace('https://') | regex_replace('/') }}"
             konnect_tp_endpoint: "{{cp_content.json.data[0]['config']['telemetry_endpoint'] | regex_replace('https://') | regex_replace('/') }}"
 
-        - debug: 
+        - name: "Certificate JSON Request Pushed to Konnect - {{ runtime_group }}"
+          debug: 
             msg: '{ "name": "{{ konnect_cp_name }}", "id" :"{{ konnect_cp_id }}", "certificates": ["{{ crt }}"] }'
+            verbosity: 2
 
-        - name: PUT Dataplane Cert to Konnect
+        - name: "PUT Dataplane Cert to Konnect - {{ runtime_group }}"
           ansible.builtin.uri:
             url: "https://{{ base_url }}/api/runtime_groups/{{ konnect_cp_id }}"
             method: PUT
@@ -60,10 +68,6 @@
               Cookie: "{{ login.cookies_string }}"
           register: cert_request
         
-        - name: output cert_request
-          debug:
-            var: cert_request
-
       vars:
         api_url: "us.api.konghq.com"
         base_url: "cloud.konghq.com"

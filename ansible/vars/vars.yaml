@@ -7,12 +7,12 @@ konnect:
     namespace: kong-sandbox
     dataplane_name: konnect-dp
     crt_secret: konnect-sandbox-crt
-    pipeline_namespace: apiops-gateway #tbd delete
+    pipeline_namespace: apiops-gateway 
   - runtime_group: dev
     namespace: kong-dev
     dataplane_name: konnect-dp
     crt_secret: konnect-dev-crt
-    pipeline_namespace: apiops-gateway #tbd delete 
+    pipeline_namespace: apiops-gateway  
 
 # list of apiops namespaces and respective tekton pipelines needed in each namespace
 apiops: 

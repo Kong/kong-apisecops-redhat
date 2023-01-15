@@ -6,6 +6,7 @@ metadata:
 spec:
   secretName: {{ crt_secret }}
   commonName: kong-dp
+  isCA: false
   duration: 2160h0m0s # 90d
   renewBefore: 360h0m0s # 15d
   organization:
@@ -19,5 +20,6 @@ spec:
   dnsNames:
   - apisecops.{{ namespace }}.example.com
   issuerRef:
-    name: selfsigned-issuer
+    name: my-ca-issuer
     kind: ClusterIssuer
+    group: cert-manager.io

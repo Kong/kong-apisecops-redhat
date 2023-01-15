@@ -1,9 +1,9 @@
 --- 
 # konnect create runtime group task
 
-- name: Attempt to create runtime group
+- name: "Attempt to create runtime group : {{ runtime_group }}"
   block:
-    - name: Create Runtime Group
+    - name: "Create Runtime Group - {{ runtime_group }}"
       ansible.builtin.uri:
         url: "https://{{ api_url }}/v2/runtime-groups"
         method: POST
@@ -17,9 +17,9 @@
           Cookie: "{{ login.cookies_string }}"
       register: cp_content
   rescue:
-    - name: Error creating the runtime group
+    - name: "Error creating the runtime group : {{ runtime_group }}"
       ansible.builtin.fail:
-        msg: "Error creating the runtime group - {{cp_content.json}}"
+        msg: "Error creating the runtime group - {{ cp_content.json }}"
       when: cp_content.status != 409
   vars:
     api_url: "us.api.konghq.com"

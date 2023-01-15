@@ -38,10 +38,13 @@
 # cert manager configuration
 - name: Cert Manager Configuration
   block: 
-    - name: Create Self- Signed Issuer Configuration
+    - name: Create Self-Signed Issuer Configuration 
       kubernetes.core.k8s: 
         state: present
-        src: "files/cluster_issuer_selfsigned.yaml"
+        src: "files/selfsigned_issuer.yaml"
+      register: result 
+      until: result is not failed
+      retries: 5
 
     - name: Wait for the SelfSigned Issuer to be Ready 
       kubernetes.core.k8s_info:
@@ -53,3 +56,12 @@
           type: Ready
           status: True
           reason: IsReady
+    
+    - name: Create CA Issuer from Self-Signed Issuer
+      kubernetes.core.k8s: 
+        state: present
+        src: "files/selfsigned_ca_issuer.yaml"
+      register: result 
+      until: result is not failed
+      retries: 5
+      delay: 10

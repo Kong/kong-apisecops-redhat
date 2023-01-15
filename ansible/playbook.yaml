@@ -44,7 +44,7 @@
       vars: 
         github_domain: "{{ gitea_route.spec.host }}"
         protocol: http
-        konnect_dev_proxy_url: "{{ demo_facts['kong-dev']['schema'] }}://{{ demo_facts['kong-dev']['host'] }}"
+        konnect_dev_proxy_url: "{{ demo_facts['kong-dev']['scheme'] }}://{{ demo_facts['kong-dev']['host'] }}"
       loop: "{{ pipeline_runs }}"
 
 # Disputes Microservice
