@@ -25,10 +25,15 @@
       ansible.builtin.shell: |
         echo "{{ crt_raw }}" | awk '{printf "%s\\n", $0}'
       register: res
-    
+
     - name: "Get Cert from Awk Output: {{ crt_secret }} - {{ runtime_group }}"
       ansible.builtin.set_fact: 
-       crt: "{{ res.stdout }}"
+       crt_json: '{ "cert": "{{ res.stdout }}" }'
+
+    - name: "Certificate JSON Request to POST to Konnect - {{ runtime_group }}"
+      debug: 
+        msg: crt_json
+        verbosity: 2
         
     - name: "Push Certificates to Konnect: {{ crt_secret }} - {{ runtime_goup }}"
       block:
@@ -38,7 +43,9 @@
             method: GET
             return_content: yes
             headers:
-              Cookie: "{{ login.cookies_string }}"
+              Content-Type: application/json
+              accept: application/json
+              Authorization: "Bearer {{ konnect_pat }}"
           register: cp_content
         
         - name: "GET Konnect Runtime Group Data Response - {{ runtime_group }}"
@@ -53,19 +60,17 @@
             konnect_cp_endpoint: "{{ cp_content.json.data[0]['config']['control_plane_endpoint'] | regex_replace('https://') | regex_replace('/') }}"
             konnect_tp_endpoint: "{{cp_content.json.data[0]['config']['telemetry_endpoint'] | regex_replace('https://') | regex_replace('/') }}"
 
-        - name: "Certificate JSON Request Pushed to Konnect - {{ runtime_group }}"
-          debug: 
-            msg: '{ "name": "{{ konnect_cp_name }}", "id" :"{{ konnect_cp_id }}", "certificates": ["{{ crt }}"] }'
-            verbosity: 2
-
-        - name: "PUT Dataplane Cert to Konnect - {{ runtime_group }}"
+        - name: "POST Dataplane Cert to Konnect - {{ runtime_group }}"
           ansible.builtin.uri:
-            url: "https://{{ base_url }}/api/runtime_groups/{{ konnect_cp_id }}"
-            method: PUT
+            url: "https://{{ api_url }}/v2/runtime-groups/{{ konnect_cp_id }}/dp-client-certificates"
+            method: POST
             body_format: json
-            body: '{ "name": "{{ konnect_cp_name }}", "id" :"{{ konnect_cp_id }}", "certificates": ["{{ crt }}"] }'
+            body: "{{ crt_json }}"
+            status_code: 201
             headers:
-              Cookie: "{{ login.cookies_string }}"
+              Content-Type: application/json
+              accept: application/json
+              Authorization: "Bearer {{ konnect_pat }}"
           register: cert_request
         
       vars:

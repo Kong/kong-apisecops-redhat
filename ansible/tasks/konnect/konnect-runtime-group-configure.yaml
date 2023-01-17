@@ -11,8 +11,7 @@
       type: Opaque
       stringData:
         .deck.yaml: |-
-          konnect-email: "{{ konnect_email }}"
-          konnect-password: "{{ konnect_pass }}"
+          konnect-token: "{{ konnect_pat }}"
 
 - name: "Create Deck ConfigMap - {{ runtime_group }} Runtime Group"
   kubernetes.core.k8s:

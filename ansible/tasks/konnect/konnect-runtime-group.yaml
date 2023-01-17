@@ -14,7 +14,9 @@
         status_code: 201
         return_content: yes
         headers:
-          Cookie: "{{ login.cookies_string }}"
+          Content-Type: application/json
+          accept: application/json
+          Authorization: "Bearer {{ konnect_pat }}"
       register: cp_content
   rescue:
     - name: "Error creating the runtime group : {{ runtime_group }}"
