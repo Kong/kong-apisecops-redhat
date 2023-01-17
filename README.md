@@ -33,15 +33,15 @@
 
 ## Introduction
 
-APISecOps stands for API design, security, and operations. Here at Kong APISecOps centers around four core fundmentals:
+APISecOps stands for API design, security, and operations. Here at Kong APISecOps centers around four core fundamentals:
 
 * **Centralization** - Centralize API Management to a single control plane. Irrespective of cloud provider, or platform, all APIs can be managed from the same control plane.
 
-* **Governance** - A governance team should be able easily customize API linting for security concerns and quickly validate.
+* **Governance** - A governance team should be able to easily customize API linting for security concerns and quickly validate.
 
-* **API Design First** - Development Teams should design and document the API upfront to validate they are update to date with current governance requirements, and accurate documentation.
+* **API Design First** - Development Teams should design and document the API upfront to validate they are up-to-date with current governance requirements, and accurate documentation.
 
-* **GitOps** - The API Spec, supporting documentation, governance, and API administration should all be handled via gitops best practices for speed, reslience, and reliablity in the process.
+* **GitOps** - The API Spec, supporting documentation, governance, and API administration should all be handled via gitops best practices for speed, resilience, and reliablity in the process.
 
 The objective of this demo is to showcase how to streamline Kong API management with the above APISecOps best practices in mind with Kong in the Red Hat Openshift Ecosystem. We will step through the responsibilities of the three personas, Development, Governance and Operations Teams, and the automation of these personas with Openshift Pipelines - Red Hat’s cloud-native CI/CD solution.
 
@@ -51,7 +51,7 @@ The objective of this demo is to showcase how to streamline Kong API management 
 
 **Governance Team** - The responsibility of the Governance Team is to build out custom security rules that align with the organizations standards. These rules are then executed during the CI/CD pipeline to evaluate if new or updating APIs comply.
 
-**Operations Team** - The operations team will have tasks in the CI/CD pipeline to convert the APISpec to a kong deck configuration file (inso cli), validates the deck meets the operational requirements, and sync the deck configuration (deck cli) to the Konnect control plane.
+**Operations Team** - The operations team will have tasks in the CI/CD pipeline to convert the APISpec to a kong deck configuration file (inso cli), validate that the deck meets their operational requirements, and sync the deck configuration (deck cli) to the Konnect control plane.
 
 These three activities as shown in the diagram above will be automated end-2-end  through gitops and CI/CD best practices.
 
@@ -61,11 +61,11 @@ These three activities as shown in the diagram above will be automated end-2-end
 
 2. **Ansible Core >= 2.13** - The playbooks have been tested on 2.13.5 and python version 3.10.8. More information can be found at [Installing Ansible][Ansible_Install_Distros].
 
-3. **Kong Konnect Plus Account** - The demo requires and *Konnect Plus* grade account because 2 runtime groups and several enterprise grade plugins are used. For more information please review the [Kong Konnect Pricing Plan][Konnect_Pricing].
+3. **Kong Konnect Plus Account** - The demo requires an *Konnect Plus* grade account because 2 runtime groups and several enterprise grade plugins are used. For more information please review the [Kong Konnect Pricing Plan][Konnect_Pricing].
 
 4. **Insomnia** - To download check out [Insomnia Download][Insomnia_Install].
 
-5. **oc cli** - The binary download can be found in the openshift console, in the ? tab on the top.
+5. **oc cli** - The binary download can be found in the openshift console, in the `?` tab on the top right.
 
 6. **Helm 3 cli** - Follow the helm documentation to install the binary [Helm Install][Helm_Install]
 
@@ -95,15 +95,15 @@ The diagram below summarizes the steps described above and aligns the pipelines 
 
 Two Runtime Groups will be either created or at least checked that it exists - Default, and Dev.
 
-Each runtime group will be provisioned 1 runtime instance (also referred to as a Gateway, Dataplane, or Proxy), each one will be in their own namespace, kong-sandbox, and kong-dev. These Gateways are exposed via loadbalancers, and are where API Consumers can call the protected backend services.
+Each runtime group will be provisioned 1 runtime instance (also referred to as a Gateway, Dataplane, or Proxy), each one will be in their own namespace, kong-sandbox, and kong-dev. These Gateways are exposed via loadbalancers, and are where API Consumers will call the protected backend services.
 
 **Openshift Pipelines/Tekton**
 
-The three pipelines to be executed will be in the namespaces `disputes-apispec` and `apiops-gateway` namespaces respectively. The seperation between namespaces is demonstrate how pipelines belonging to different personas (Dev Teams vs. Governance and API Operator teams) can be managed in a more secure fashion.
+The three pipelines to be executed will be in the namespaces `disputes-apispec` and `apiops-gateway`. The separation between namespaces is to demonstrate how pipelines belonging to different personas (Dev Teams vs. Governance and API Operator teams) can be managed in a more secure fashion.
 
 **Gitea (Self-hosted Git service)**
 
-Gitea is a self-hosted Git service. It is stood up in the cluster in the `gitea` namespace. Two the git repos required to run the demo are imported, and any dummy passwords needed for the demo are seeded in the projects and provided to the user. Details on the two repositories:
+Gitea is a self-hosted Git service. It is stood up in the cluster in the `gitea` namespace. The two git repos required to run the demo are imported, and any dummy passwords needed for the demo are seeded in the projects and provided to the user. Details on the two repositories:
 
 * `acmebank-disputes-apispec`: Contains the `.insomnia` design disputes API Design doc.
 * `acmebank-apiops-gateway`: Contains the governance rules, deck and apispec files version controlled.
@@ -169,7 +169,7 @@ Execute the install ansible playbook. The play will do the following:
 * **Disputes Sample App** - create namespace and deploy
 
 ```console
-ansible-playbook ansible/playbook.yaml --extra-vars "konnect_email=<yourEmail> konnect_pass=<yourPassword>"
+ansible-playbook ansible/playbook.yaml --extra-vars "konnect_pat=<yourPersonalAccessToken>"
 ```
 
 Any required information, urls, dummy passwords, load balancers, are spit out as the last task in the ansible playbook, and saved in the `ansible/demo_facts.json` file for safe keeping.
