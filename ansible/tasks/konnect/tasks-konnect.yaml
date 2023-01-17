@@ -1,21 +1,4 @@
 ---
-# tasks to create a konnect dataplane
-- name: Authenticate to Konnect
-  ansible.builtin.uri:
-    url: "https://{{ base_url }}/kauth/api/v1/authenticate"
-    method: POST
-    body_format: json
-    body: '{ "username": "{{ konnect_email }}", "password":"{{ konnect_pass }}" }'
-    return_content: yes
-  register: login
-  vars:
-    base_url: "cloud.konghq.com"
-
-- name: login output response
-  debug: 
-    var: login
-    verbosity: 2
-
 - name: Create Konnect Gateway Namespace
   kubernetes.core.k8s:
     api_version: v1
