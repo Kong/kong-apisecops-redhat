@@ -42,6 +42,7 @@
             url: "https://{{ api_url }}/v2/runtime-groups?filter%5Bname%5D%5Beq%5D={{ runtime_group }}"
             method: GET
             return_content: yes
+            status_code: 200
             headers:
               Content-Type: application/json
               accept: application/json
@@ -66,7 +67,7 @@
             method: POST
             body_format: json
             body: "{{ crt_json }}"
-            status_code: 201
+            status_code: [ 201, 409 ]
             headers:
               Content-Type: application/json
               accept: application/json
