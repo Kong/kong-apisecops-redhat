@@ -11,14 +11,14 @@
 <!-- code_chunk_output -->
 
 * [Introduction](#introduction)
-* [Prerequisites](#prequisites)
 * [TutorialOverview](#tutorial-overview)
     1. [AcmeBank Disputes APISpec](#acmebank-disputes-apispec)
     2. [Infrastructure](#infrastructure)
 * [Getting Started](#getting-started)
-    1. [Download Git Repo](#download-git-repo)
-    2. [ROSA](#rosa)
-    3. [Ansible](#ansible)
+    1 [Prerequisites](#prequisites)
+    2. [Download Git Repo](#download-git-repo)
+    3. [ROSA](#rosa)
+    4. [Ansible](#ansible)
 * [Devops Tutorial](#tutorial-overview)
     1. [API Design](#1-api-design---update-the-apispec-in-insomnia)
     2. [Review Pipeline](#2-submit-the-apispec-for-review)
@@ -54,20 +54,6 @@ The objective of this demo is to showcase how to streamline Kong API management 
 **Operations Team** - The operations team will have tasks in the CI/CD pipeline to convert the APISpec to a kong deck configuration file (inso cli), validate that the deck meets their operational requirements, and sync the deck configuration (deck cli) to the Konnect control plane.
 
 These three activities as shown in the diagram above will be automated end-2-end  through gitops and CI/CD best practices.
-
-## Prequisites
-
-1. **Openshift Cluster** - This demo will step through the rosa cli command to create a ROSA cluster but any OpenShift cluster will suffice. This demo has been tested on OCP 4.11.
-
-2. **Ansible Core >= 2.13** - The playbooks have been tested on 2.13.5 and python version 3.10.8. More information can be found at [Installing Ansible][Ansible_Install_Distros].
-
-3. **Kong Konnect Plus Account** - The demo requires an *Konnect Plus* grade account because 2 runtime groups and several enterprise grade plugins are used. For more information please review the [Kong Konnect Pricing Plan][Konnect_Pricing].
-
-4. **Insomnia** - To download check out [Insomnia Download][Insomnia_Install].
-
-5. **oc cli** - The binary download can be found in the openshift console, in the `?` tab on the top right.
-
-6. **Helm 3 cli** - Follow the helm documentation to install the binary [Helm Install][Helm_Install]
 
 ## Tutorial Overview
 
@@ -113,6 +99,20 @@ Gitea is a self-hosted Git service. It is stood up in the cluster in the `gitea`
 The sample application is deployed in `disputes-dev` namespace. It is a very small JBoss EAP application server.
 
 ## Getting Started
+
+### Prequisites
+
+1. **Openshift Cluster** - This demo will step through the rosa cli command to create a ROSA cluster but any OpenShift cluster will suffice. This demo has been tested on OCP 4.11.
+
+2. **Ansible Core >= 2.13** - The playbooks have been tested on 2.13.5 and python version 3.10.8. More information can be found at [Installing Ansible][Ansible_Install_Distros].
+
+3. **Kong Konnect Plus Account** - The demo requires an *Konnect Plus* grade account because 2 runtime groups and several enterprise grade plugins are used. For more information please review the [Kong Konnect Pricing Plan][Konnect_Pricing].
+
+4. **Insomnia** - To download check out [Insomnia Download][Insomnia_Install].
+
+5. **oc cli** - The binary download can be found in the openshift console, in the `?` tab on the top right.
+
+6. **Helm 3 cli** - Follow the helm documentation to install the binary [Helm Install][Helm_Install]
 
 ### Download Git Repo
 
