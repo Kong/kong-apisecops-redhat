@@ -15,7 +15,7 @@
     1. [AcmeBank Disputes APISpec](#acmebank-disputes-apispec)
     2. [Infrastructure](#infrastructure)
 * [Getting Started](#getting-started)
-    1 [Prerequisites](#prequisites)
+    1. [Prerequisites](#prequisites)
     2. [Download Git Repo](#download-git-repo)
     3. [ROSA](#rosa)
     4. [Ansible](#ansible)
@@ -106,7 +106,7 @@ The sample application is deployed in `disputes-dev` namespace. It is a very sma
 
 2. **Ansible Core >= 2.13** - The playbooks have been tested on 2.13.5 and python version 3.10.8. More information can be found at [Installing Ansible][Ansible_Install_Distros].
 
-3. **Kong Konnect Plus Account** - The demo requires an *Konnect Plus* grade account because 2 runtime groups and several enterprise grade plugins are used. For more information please review the [Kong Konnect Pricing Plan][Konnect_Pricing].
+3. **Kong Konnect Plus Account** - The demo requires an *Konnect Plus* grade account because 2 runtime groups and several enterprise grade plugins are used. For more information please review the [Kong Konnect Pricing Plan][Konnect_Pricing] and creation of a *Personal Access Token* in Konnect.
 
 4. **Insomnia** - To download check out [Insomnia Download][Insomnia_Install].
 
