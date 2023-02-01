@@ -19,19 +19,23 @@
     2. [Download Git Repo](#download-git-repo)
     3. [ROSA](#rosa)
     4. [Ansible](#ansible)
-* [Devops Tutorial](#tutorial-overview)
+* [APISecOps Tutorial](#tutorial-overview)
     1. [API Design](#1-api-design---update-the-apispec-in-insomnia)
     2. [Review Pipeline](#2-submit-the-apispec-for-review)
     3. [Sandbox Pipeline](#3-governance-review-and-publish-api-to-konnect-sandbox-gateway-environment)
     4. [Dev Pipeline](#4-publish-api-to-konnect-dev-gateway-environment)
+    5. [Documentation in Service Hub and Dev Portal](#5-documentation-with-service-hub-and-dev-portal)
 * [Cleanup](#cleanup)
 * [Project Directory Overview](#project-directory-overview)
-* [References and Links](#references)
+* [References](#references)
+* [Videos](#videos)
 * [License](#license)
 
 <!-- /code_chunk_output -->
 
 ## Introduction
+
+[Watch Video 1: Introduction][1_Intro]
 
 APISecOps stands for API design, security, and operations. Here at Kong APISecOps centers around four core fundamentals:
 
@@ -99,6 +103,8 @@ Gitea is a self-hosted Git service. It is stood up in the cluster in the `gitea`
 The sample application is deployed in `disputes-dev` namespace. It is a very small JBoss EAP application server.
 
 ## Getting Started
+
+[Watch Video 2: Getting Started - Deploy Infra][2_GettingStarted_DeployInfra]
 
 ### Prequisites
 
@@ -174,9 +180,13 @@ ansible-playbook ansible/playbook.yaml --extra-vars "konnect_pat=<yourPersonalAc
 
 Any required information, urls, dummy passwords, load balancers, are spit out as the last task in the ansible playbook, and saved in the `ansible/demo_facts.json` file for safe keeping.
 
-## Devops Tutorial
+[Watch Video 3: Getting Started - Review Infra][3_GettingStarted_ReviewInfra]
+
+## APISecOps Tutorial
 
 ### 1. API Design - Update the APISpec in Insomnia
+
+[Watch Video 4: Tutorial 1 - API Design][4_Tutorial_APIDesign]
 
 **Import the APISpec**
 
@@ -245,6 +255,8 @@ The changes have now been committed to the master branch. Navigate to the gitea 
 
 ### 2. Submit the APISpec for Review
 
+[Watch Video 5: Tutorial 2 - API Design][5_Tutorial_Pipeline_1]
+
 This step is for the **Developer Persona**
 
 Once the APISpec is ready to review,  the disputes-apispec-review pipeline will be executed. This pipeline will:
@@ -268,6 +280,8 @@ To view and validate the pipeline is running, navigate to the `disputes-apispec`
 <img src="img/1-pipelinerun-apispec-review.png" alt="kong apisecops apiops rosa"/>
 
 ### 3. Governance Review and Publish API to Konnect-Sandbox Gateway Environment
+
+[Watch Video 6: Tutorial 3 - Governance and Sandbox Pipeline][6_Tutorial_Pipeline_2]
 
 **Publish API to Sandbox Gateway Env**
 
@@ -318,6 +332,8 @@ With the environments setup in the Insomnia workspace, you can now hit the sandb
 
 ### 4. Publish API to Konnect-Dev Gateway Environment
 
+[Watch Video 7: Tutorial 4 - Dev Pipeline][7_Tutorial_Pipeline_3]
+
 **Publish API to Dev Gateway Env**
 
 This pipeline is for the **Operations Personas**
@@ -354,6 +370,12 @@ For the dev environment, the gatey configuration has been setup to proxy request
 * Open the `Debug` Tab in Insomnia
 * Change to the `Konnect-Dev` Environment
 * Execute the disputes requests to validate the behavior. You should see new responses, and possibly a 404 on /disputes/{id} (because it's in Dev and still in testing 😆).
+
+### 5. Documentation with Service Hub and Dev Portal
+
+This section is very Konnect UI heavy. For this reason this section only has a video tutorial to follow.
+
+[Watch Video 8: Tutorial 5 - Documentation][8_Tutorial_Documentation]
 
 ## Cleanup
 
@@ -408,6 +430,17 @@ rosa delete cluster --cluster $CLUSTER_NAME
 * [Rosa Quickstart Guide][Rosa_Docs]
 * [Install Insomnia][Insomnia_Install]
 
+## Videos
+
+* [1 - Intro][1_Intro]
+* [2 - Getting Started - Deploy Infra][2_GettingStarted_DeployInfra]
+* [3 - Getting Started - Review Infra][3_GettingStarted_ReviewInfra]
+* [4 - Tutorial - API Design][4_Tutorial_APIDesign]
+* [5 - Tutorial - Pipeline 1 - Submit Review][5_Tutorial_Pipeline_1]
+* [6 - Tutorial - Pipeline 2 - Governance and Sandbox Deploy][6_Tutorial_Pipeline_2]
+* [7 - Tutorial - Pipeline 3 - Dev Deploy][7_Tutorial_Pipeline_3]
+* [8 - Tutorial - Documentation in Service Hub and Dev Portal][8_Tutorial_Documentation]
+
     [list of links]: #
 
 [Konnect_Pricing]: https://konghq.com/pricing
@@ -415,6 +448,14 @@ rosa delete cluster --cluster $CLUSTER_NAME
 [Rosa_Docs]: https://docs.openshift.com/rosa/rosa_getting_started/rosa-quickstart-guide-ui.html
 [Insomnia_Install]: https://insomnia.rest/download
 [Helm_Install]: https://helm.sh/docs/intro/install
+[1_Intro]: https://youtu.be/svdfh_JeJK0
+[2_GettingStarted_DeployInfra]: https://youtu.be/ZeWw7H9azhs
+[3_GettingStarted_ReviewInfra]: https://youtu.be/t-YPI1RYy68
+[4_Tutorial_APIDesign]: https://youtu.be/doZVUgMKGEU
+[5_Tutorial_Pipeline_1]: https://youtu.be/GDSQEyIJKNQ
+[6_Tutorial_Pipeline_2]: https://youtu.be/fye6BGhCqgg
+[7_Tutorial_Pipeline_3]: https://youtu.be/252Hu7Wmt0o
+[8_Tutorial_Documentation]: https://youtu.be/SPpxENoqOmU
 
 ## License
 
